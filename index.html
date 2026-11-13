@@ -6,19 +6,19 @@
 <title>색깔을 훔쳐간 범인</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Gowun+Dodum&family=Jua&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Jua&family=Noto+Sans+KR:wght@400;500;700;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 /* 수사 파일 컨셉: 크림 종이 + 마닐라 폴더 + 빨간 도장, 남색 잉크. 3학년이 보기 쉽게 큰 글씨 */
 :root{
   --bg:#FFF7EA;--paper:#FFFFFF;--kraft:#F6E3BC;--kraft2:#EBCB8E;--ink:#2B2638;--soft:#6E6680;--line:#EADFCB;
   --blue:#2F5BD3;--stamp:#E0473C;--mustard:#FFC53D;--ok:#2B9A57;--warn:#E8590C;
-  --f-d:'Jua','Gowun Dodum',sans-serif;--f-b:'Gowun Dodum','Apple SD Gothic Neo','Malgun Gothic',sans-serif;--f-e:'Andika','Gowun Dodum',sans-serif;
+  --f-d:'Jua','Noto Sans KR','Noto Sans CJK KR',sans-serif;--f-b:'Noto Sans KR','Noto Sans CJK KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;--f-e:'Andika','Noto Sans KR',sans-serif;--f-t:'Nunito','Noto Sans KR','Noto Sans CJK KR',sans-serif;
   color-scheme:light
 }
 *{box-sizing:border-box}
 html,body{height:100%}
-body{margin:0;background:var(--bg);background-image:linear-gradient(rgba(43,38,56,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(43,38,56,.035) 1px,transparent 1px);background-size:28px 28px;color:var(--ink);font-family:var(--f-b);font-size:19px;line-height:1.5}
+body{margin:0;-webkit-font-smoothing:antialiased;background:var(--bg);background-image:linear-gradient(rgba(43,38,56,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(43,38,56,.035) 1px,transparent 1px);background-size:28px 28px;color:var(--ink);font-family:var(--f-b);font-size:19px;line-height:1.5}
 button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 input,select,textarea{font:inherit;color:var(--ink)}
 button:focus-visible,input:focus-visible,select:focus-visible{outline:4px solid var(--blue);outline-offset:2px}
@@ -234,13 +234,41 @@ td select,td input{border:1px solid var(--line);border-radius:8px;padding:4px 6p
 .hsp.dim{filter:opacity(.25)}
 .hsnums{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;margin-top:10px}.hsnums [data-n]{font-size:30px;min-width:64px}
 .tr{display:none}
-html.bi .tr{display:block;font-family:var(--f-e);font-weight:400;font-size:.68em;line-height:1.25;opacity:.72;letter-spacing:0;margin-top:1px}
+html.bi .tr{display:block;font-family:var(--f-t);font-weight:700;font-size:max(13px,.62em);line-height:1.3;color:#857B95;letter-spacing:.01em;margin-top:2px}
+html.bi .btn.go .tr,html.bi .btn.red .tr,html.bi .nav button.on .tr,html.bi .hubtag .tr,html.bi .c4t1 .tr{color:rgba(255,255,255,.82)}
+html.bi h1 .tr,html.bi h2 .tr{font-size:.5em;color:#6E6680;font-weight:800;margin-top:4px}
 html.bi button .tr,html.bi .pill .tr,html.bi .stamp .tr{font-size:.6em}
 html.bi .nav button .tr{font-size:.58em;margin-top:-2px}
 html.bi .nav button{padding:4px 12px;font-size:18px}
 html.bi .cls .tr,html.bi #spd .tr{display:none}
 html.bi .logo b{font-size:24px}
 html.bi .logo .tr{font-size:.55em}
+
+/* ---- 처음 화면 ---- */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:center;background:var(--kraft);border-radius:28px;padding:30px 36px;margin-top:20px;box-shadow:0 6px 0 var(--kraft2)}
+.herotxt{display:grid;gap:12px;justify-items:start}
+.herotxt h1{font-size:clamp(40px,4.6vw,64px)}
+.herotxt p{margin:0;font-size:22px;line-height:1.6;font-weight:500}
+.herotxt .hq{display:flex;gap:10px;flex-wrap:wrap}.herotxt .hq .en{background:#fff;border-radius:12px;padding:4px 14px;font-size:24px}
+.herosus{display:flex;gap:4px;align-items:flex-end}.herosus img{height:min(34vh,280px);width:auto}
+.hgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:22px}
+.hcard{position:relative;border:0;background:#fff;border-radius:24px;padding:22px 24px 24px;text-align:left;display:grid;gap:6px;align-content:start;box-shadow:0 6px 0 var(--line);transition:transform .12s}
+.hcard:hover{transform:translateY(-3px)}
+.htag{justify-self:start;font-weight:700;font-size:15px;border-radius:999px;padding:4px 12px}.htag.t1{background:#FFF1C9}.htag.t2{background:#E6F6EC}.htag.t3{background:#E3EEFF}
+.htitle{font-family:var(--f-d);font-weight:400;font-size:34px;line-height:1.2;margin-top:6px}
+.hen{font-family:var(--f-t);font-weight:800;font-size:17px;color:#857B95}
+.hdesc{font-size:18px;color:var(--soft);margin-top:4px}
+.hgo{position:absolute;right:22px;bottom:18px;font-size:26px;color:var(--blue)}
+.credit{text-align:center;color:var(--soft);margin-top:26px;font-size:15px}
+.hcard:not(.hubc) .tr,.hero .hq .tr{display:none!important}
+@media (max-width:1000px){.hgrid{grid-template-columns:1fr}.hero{grid-template-columns:1fr}}
+.hubgrid2{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))!important;margin-top:8px}
+.hubc{padding-bottom:20px}.hubc .htitle{font-size:30px;display:block}.hrow{display:flex;justify-content:space-between;align-items:center}.hic{font-size:34px;line-height:1}
+.hubc .hdesc{font-size:17px;line-height:1.55;min-height:3.1em}
+.hfoot{justify-self:start;margin-top:6px;font-size:14px;font-weight:700;color:var(--soft);background:#FBF5EA;border-radius:999px;padding:3px 12px}
+.htag.hh0{background:#DCE7FF;color:#2F5BD3}.htag.hh1{background:#FFE7CF;color:#B85C00}.htag.hh2{background:#DFF3E5;color:#1F7A44}
+.hubc .hdesc .tr,.hubc .hfoot .tr{display:none!important}
+html.bi .hubc .htitle .tr{font-family:var(--f-t);font-weight:800;font-size:17px;color:#857B95;margin:0}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:900px){.split{grid-template-columns:1fr}.lineup{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
@@ -382,15 +410,17 @@ function render(){({home:renderHome,class:renderClass,make:renderMake,oral:rende
 
 /* ---------- 처음 화면 ---------- */
 function renderHome(){
-  app.innerHTML=shell(`<section class="folder" style="margin-top:22px"><div class="row" style="justify-content:space-between;align-items:flex-start"><div class="col" style="gap:8px;max-width:680px"><span class="stamp" style="font-size:22px;justify-self:start">WANTED</span><h1 style="font-size:52px">색깔을 훔쳐간 범인</h1><p style="font-size:22px;margin:0">누군가 우리 마을의 색깔을 몰래 훔쳐 갔어요! 범인을 본 목격자는 바로 여러분이에요.<br>범인의 옷 색깔을 기억해서 칠하고, 영어로 진술서를 써요. 그리고 친구들 앞에서 <b class="en">"What color is it?" — "It's red."</b>로 범인을 알려 줘요.</p></div>
-   <div class="row" id="homeSus" style="gap:6px"></div></div></section>
-  <button data-go="class" class="card col" style="width:100%;margin-top:24px;border:0;text-align:left;background:linear-gradient(120deg,#fff 60%,#FFF1C9)"><span class="pill" style="background:#FFF1C9;justify-self:start">1~3차시 · 전자칠판 수업 게임</span><h2 style="font-size:40px">🏫 수사 본부 <span class="soft" style="font-size:24px">— 범인을 잡기 위한 수사 훈련</span></h2><p class="soft" style="margin:0;font-size:20px">🐾 발자국 추격(듣기) · 🦹 사라진 색깔·🟡 4목(말하기) · 📜 수배 전단·🔍 숨은 용의자·🃏 짝 맞추기·🚦 스트루프(읽기)</p></button>
-  <section class="row" style="margin-top:20px;align-items:stretch">
-   <button data-go="make" class="card col" style="flex:1;min-width:300px;border:0;text-align:left"><span class="pill" style="background:#E6F6EC;justify-self:start">4차시 평가 · 개인 크롬북</span><h2 style="font-size:38px">🖍️ 범인 몽타주 만들기</h2><p class="soft" style="margin:0;font-size:20px">범인 5곳 색칠 → 진술서 5문장 쓰기 → 듣고 따라 읽어 녹음 → 제출</p></button>
-   <button data-go="oral" class="card col" style="flex:1;min-width:300px;border:0;text-align:left"><span class="pill" style="background:#E3EEFF;justify-self:start">4차시 평가 · 전자칠판</span><h2 style="font-size:38px">🕵️ 범인을 찾아라</h2><p class="soft" style="margin:0;font-size:20px">한 명씩 나와 목격자가 돼요. 반 친구들이 묻고, 목격자가 대답하고, 다 함께 진짜 범인을 골라요.</p></button>
-  </section>${DEMO?'':'<div style="text-align:center;margin-top:22px"><button class="btn yel" id="demoHome">🎮 서버 없이 체험해 보기 (예시 학생으로 범인을 찾아라 미리 보기)</button></div>'}<p class="soft" style="text-align:center;margin-top:28px">made by Tr. Olivia</p>`);
-  const dh=$('#demoHome');if(dh)dh.onclick=()=>startDemo(()=>go('oral'));
-  loadAll().then(()=>{const box=$('#homeSus');if(!box)return;['a','b','c','d'].forEach(k=>{const cs={};for(let p=1;p<=5;p++)cs[p]=pick(W9);const c=document.createElement('canvas');paintSus(c,k,cs,{scale:.3});c.className='sus';c.style.height='240px';c.style.width='auto';box.appendChild(c)})});
+  const card=(go,tag,tone,title,en,desc)=>`<button data-go="${go}" class="hcard"><span class="htag ${tone}">${tag}</span><b class="htitle">${title}</b><span class="hen">${en}</span><span class="hdesc">${desc}</span><span class="hgo">→</span></button>`;
+  app.innerHTML=shell(`<section class="hero"><div class="herotxt"><span class="stamp" style="font-size:20px">WANTED</span><h1>색깔을 훔쳐간 범인</h1>
+     <p>누군가 우리 마을의 색깔을 훔쳐 갔어요!<br>목격자가 되어 범인의 옷 색깔을 영어로 알려 줘요.</p>
+     <p class="hq"><span class="en">"What color is it?"</span> <span class="en">"It's red."</span></p></div>
+    <div class="herosus" id="homeSus"></div></section>
+   <section class="hgrid">
+    ${card('class','1~3차시 · 수업 게임','t1','수사 본부','Detective HQ','듣기 · 말하기 · 읽기 게임 7가지')}
+    ${card('make','4차시 · 학생 크롬북','t2','범인 몽타주 만들기','Make the Thief’s Sketch','색칠하고, 진술서를 쓰고, 묻고 답해요')}
+    ${card('oral','4차시 · 전자칠판','t3','범인을 찾아라','Find the Thief','한 명씩 나와 목격자가 돼요')}
+   </section><p class="credit">made by Tr. Olivia</p>`);
+  loadAll().then(()=>{const box=$('#homeSus');if(!box)return;['a','b','c','d'].forEach(k=>{const cs={};const pal=shuffle(W9);for(let p=1;p<=5;p++)cs[p]=pal[p-1];const im=document.createElement('img');im.src=susImg(k,cs,.5,true);im.alt='';box.appendChild(im)})});
 }
 
 /* =====================================================================
@@ -550,9 +580,9 @@ function mkSubmit(el){
    교사 비밀번호
    ===================================================================== */
 function pinGate(next){
-  app.innerHTML=shell(`<div class="folder" style="max-width:460px;margin:40px auto 0"><div class="col"><h2 style="font-size:32px">🔒 선생님 확인</h2><p style="margin:0">비밀번호를 입력하세요. (처음 비밀번호 1234 · 교사 화면에서 바꿀 수 있어요)</p><input id="pin" type="password" inputmode="numeric" autocomplete="off" style="font-size:30px;border:0;border-radius:14px;padding:10px 14px"><button class="btn go big" id="ok">들어가기</button><hr style="border:0;border-top:2px dashed var(--kraft2);width:100%;margin:6px 0"><button class="btn yel" id="demo">🎮 서버 없이 체험해 보기</button><p class="soft" style="margin:0;font-size:16px">예시 학생 8명이 들어 있어요. 체험 중 기록은 이 기기에만 남고 실제 채점에는 들어가지 않아요.</p></div></div>`);
-  $('#demo').onclick=()=>startDemo(next);
-  const ok=async()=>{const v=$('#pin').value;if(!v)return;const b=$('#ok');b.disabled=true;try{const r=await API.rpc('mt_check_pin',{p_pin:v});if(r===true){PIN=v;SS.set('mt_pin',v);next()}else{toast('비밀번호가 달라요');b.disabled=false}}catch(e){toast('서버에 연결하지 못했어요. 아래 체험 모드로 둘러볼 수 있어요');b.disabled=false}};
+  app.innerHTML=shell(`<div class="folder" style="max-width:460px;margin:40px auto 0"><div class="col"><h2 style="font-size:32px">🔒 선생님 확인</h2><p style="margin:0">비밀번호를 입력하세요. (처음 비밀번호 1234 · 교사 화면에서 바꿀 수 있어요)</p><input id="pin" type="password" inputmode="numeric" autocomplete="off" style="font-size:30px;border:0;border-radius:14px;padding:10px 14px"><button class="btn go big" id="ok">들어가기</button></div></div>`);
+
+  const ok=async()=>{const v=$('#pin').value;if(!v)return;const b=$('#ok');b.disabled=true;try{const r=await API.rpc('mt_check_pin',{p_pin:v});if(r===true){PIN=v;SS.set('mt_pin',v);next()}else{toast('비밀번호가 달라요');b.disabled=false}}catch(e){toast('서버에 연결하지 못했어요. 인터넷 연결을 확인해 주세요');b.disabled=false}};
   $('#ok').onclick=ok;$('#pin').onkeydown=e=>{if(e.key==='Enter')ok()};$('#pin').focus();
 }
 async function loadRows(cls){const rows=await API.rpc('mt_teacher_list',{p_pin:PIN,p_class:cls});return rows||[]}
@@ -763,7 +793,7 @@ const koOf=(k,p)=>SUSPECT_DATA[k].names[p-1];
 const CAP=s=>s.charAt(0).toUpperCase()+s.slice(1);
 const best=(key,v)=>{const k='mt_best_'+key+'_'+CLS;const o=LS.get(k,null);if(v!=null&&(o==null||v<o)){LS.set(k,v);return {old:o,isNew:true}}return {old:o,isNew:false}};
 const FOOT_SVG=c=>`<svg viewBox="0 0 64 84" aria-hidden="true"><g fill="${hex(c)}" stroke="#2B2638" stroke-width="3"><ellipse cx="34" cy="56" rx="19" ry="24"/><circle cx="13" cy="24" r="7"/><circle cx="25" cy="14" r="7.5"/><circle cx="39" cy="12" r="7.5"/><circle cx="52" cy="19" r="7"/></g></svg>`;
-const gHead=(title,sub='')=>`<div class="row" style="justify-content:space-between;margin-bottom:12px"><div class="row"><button class="btn sm" id="gBack">◀ 수사 본부</button><h1 style="font-size:36px">${title}</h1></div><div class="row" id="gHeadR">${sub}</div></div>`;
+const gHead=(title,sub='')=>`<div class="row" style="justify-content:space-between;margin-bottom:30px"><div class="row"><button class="btn sm" id="gBack">◀ 수사 본부</button><h1 style="font-size:36px">${title}</h1></div><div class="row" id="gHeadR">${sub}</div></div>`;
 function gBind(){const b=$('#gBack');if(b)b.onclick=()=>{gStop();hush();G.id=null;renderClass()}}
 function lvlBtns(name,opts,cur){return `<div class="row" style="gap:8px">${opts.map(([v,t])=>`<button class="sbtn ${cur===v?'on':''}" data-${name}="${v}" style="padding:10px 18px;font-size:22px">${t}</button>`).join('')}</div>`}
 
@@ -778,7 +808,7 @@ function renderClass(){
   gStop();
   if(G.id)return ({hs:hsSetup,px:pxSetup,fp:fpSetup,c4:c4Setup,wp:wpSetup,mm:mmSetup,mc:mcSetup,st:stSetup})[G.id]();
   app.innerHTML=shell(`<div class="row" style="justify-content:space-between;margin:6px 0 16px"><div><h1 style="font-size:42px">🏫 수사 본부</h1><p class="soft" style="margin:4px 0 0;font-size:20px">범인을 잡으려면 수사 훈련이 필요해요! 전자칠판으로 반 전체가 함께 해요.</p></div><span class="stamp" style="font-size:24px">TRAINING</span></div>
-   <div class="hubgrid">${HUB.map((g,gi)=>g.items.map(it=>`<button class="card hubcard" data-g="${it.id}"><span class="row" style="justify-content:space-between"><span class="hubic">${it.ic}</span><span class="pill hubtag h${gi}">${g.h}</span></span><b>${it.t}</b><span class="soft">${it.d}</span><span class="pill" style="background:var(--kraft);justify-self:start">${it.tag}</span></button>`).join('')).join('')}</div>`);
+   <div class="hgrid hubgrid2">${HUB.map((g,gi)=>g.items.map(it=>`<button class="hcard hubc" data-g="${it.id}"><span class="hrow"><span class="htag hh${gi}">${g.h}</span><span class="hic">${it.ic}</span></span><b class="htitle">${it.t}</b><span class="hdesc">${it.d}</span><span class="hfoot">${it.tag}</span><span class="hgo">→</span></button>`).join('')).join('')}</div>`);
   $$('[data-g]').forEach(b=>b.onclick=()=>{G.id=b.dataset.g;renderClass()});
 }
 
@@ -1113,7 +1143,7 @@ const EN_DICT={
 "구술 #점 (선생님)# 모두 스스로 정확하게 · # 대체로 정확하게 (#곳 실수) · # 도움을 받아 대답 · # 일부만 대답 · # 참여는 했어요":"Speaking # pts (teacher): # all correct alone · # mostly correct · # with help · # partly · # tried",
 "서답형 #점 (자동 · #단계)매우잘함 # 색깔 단어를 스스로 맞게 씀 (오타, #문장 헷갈림은 괜찮아요)잘함 # #문장에서 다른 색을 썼거나, 한 문장을 #번 이상 틀렸다가 스스로 맞힘보통 # #문장 이상 다른 색을 씀 · 힌트를 보고 씀":"Writing # pts (auto, # levels): Excellent # · Good # · Fair #",
 
-"색깔을 훔쳐간 범인":"The Color Thief",
+"색깔을 훔쳐간 범인":"The Color Thief","누군가 우리 마을의 색깔을 훔쳐 갔어요!목격자가 되어 범인의 옷 색깔을 영어로 알려 줘요.":"Someone stole our town’s colors! Be a witness and tell everyone the thief’s colors in English.","#~#차시 · 수업 게임":"Lessons #–# · Class games","#차시 · 학생 크롬북":"Lesson # · Chromebooks","#차시 · 전자칠판":"Lesson # · Class board","듣기 · 말하기 · 읽기 게임 #가지":"# listening, speaking & reading games","색칠하고, 진술서를 쓰고, 묻고 답해요":"Color, write a statement, ask & answer","한 명씩 나와 목격자가 돼요":"Come up one by one as a witness","수사 본부":"","범인 몽타주 만들기":"","범인을 찾아라":"",
 "🏠 처음":"Home","🏫 수사 본부":"Detective HQ","🖍️ 몽타주 만들기":"Make a Sketch","🕵️ 범인을 찾아라":"Find the Thief","🔒 교사":"Teacher",
 "반":"Class","🐢 천천히":"Slow","🐇 보통":"Normal","🌐 한/EN":"","🌐 한국어":"",
 "🎮 체험 중 ✕":"Demo mode ✕","📝 평가 중":"Test in progress",
