@@ -152,6 +152,10 @@ td select,td input{border:1px solid var(--line);border-radius:8px;padding:4px 6p
 .fpsetup{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr);gap:20px;align-items:start}
 .lbl{font-family:var(--f-d);font-weight:400;font-size:22px}
 .fprank{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.fprank>div{background:#FBF5EA;border-radius:12px;padding:6px;display:grid;justify-items:center;font-family:var(--f-d)}.fprank>div.me{background:#FFF1C9;box-shadow:0 0 0 3px var(--mustard) inset}.fprank b{font-weight:400;font-size:18px}.fprank span{font-family:var(--f-e);font-weight:700;font-size:20px}.fprank small{font-size:13px;color:var(--soft);min-height:15px}
+.fpcls .tr,.fprank .tr{display:none!important}
+.fpbox{display:grid;gap:12px;background:rgba(255,255,255,.55);border-radius:18px;padding:14px 16px}.fpboxh{font-family:var(--f-d);font-weight:400;font-size:22px}
+.fpcls{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px}.fpcls .sbtn{font-size:24px;padding:10px 0}
+.stepv .tr{display:none!important}
 .stepv{font-family:var(--f-e);font-size:26px;min-width:90px;text-align:center}
 .fpcfg summary{font-family:var(--f-d);font-size:20px;cursor:pointer}
 .fptop{margin:0;padding-left:26px;font-size:20px;line-height:1.6}
@@ -824,19 +828,20 @@ function fpSetup(){
   const mine=(R[fpKey(FP.cls,FP.lv,FP.n)]||[]).slice(0,5);
   app.innerHTML=shell(gHead('🐾 도둑의 발자국 추격')+`<div class="fpsetup"><div class="folder col" style="gap:16px">
    <p style="margin:0;font-size:22px">도둑이 색깔 발자국을 남기고 도망쳤어요! <b>들리는 색 발자국</b>을 터치해요. 한 명씩 도전하고, <b>가장 빠른 기록이 우리 반 기록</b>이 돼요.</p>
-   <div class="col" style="gap:6px"><b class="lbl">우리 반</b>${lvlBtns('cl',Array.from({length:FP.nc},(_,i)=>[i+1,(i+1)+'반']),FP.cls)}</div>
-   <div class="row" style="gap:10px"><b class="lbl">문제 수</b><button class="btn sm" data-nqd="-1">−</button><b class="stepv">${FP.n}개</b><button class="btn sm" data-nqd="1">+</button><span class="soft" style="font-size:16px">10~30개</span></div>
-   <details class="fpcfg"><summary>⚙️ 설정</summary><div class="row" style="gap:10px;margin-top:8px"><b class="lbl">학년 반 개수</b><button class="btn sm" data-ncd="-1">−</button><b class="stepv">${FP.nc}개 반</b><button class="btn sm" data-ncd="1">+</button><button class="btn sm red" id="fpClr" style="margin-left:auto">기록 모두 지우기</button></div></details>
-   <div class="col" style="gap:6px"><b class="lbl">단계</b>${lvlBtns('lv',[[1,'① 단어 (Red!)'],[2,'② 문장 (It\'s red.)'],[3,'③ 발자국이 움직여요']],FP.lv)}</div>
+   <div class="fpbox"><b class="fpboxh">⚙️ 설정</b>
+    <div class="row" style="gap:10px"><b class="lbl">학년 반 개수</b><button class="btn sm" data-ncd="-1">−</button><b class="stepv">${FP.nc}개 반</b><button class="btn sm" data-ncd="1">+</button></div>
+    <div class="row" style="gap:10px"><b class="lbl">문제 수</b><button class="btn sm" data-nqd="-1">−</button><b class="stepv">${FP.n}개</b><button class="btn sm" data-nqd="1">+</button><span class="soft" style="font-size:16px">10~30개</span></div>
+    <div class="col" style="gap:6px"><b class="lbl">단계</b>${lvlBtns('lv',[[1,'① 단어 (Red!)'],[2,'② 문장 (It\'s red.)'],[3,'③ 발자국이 움직여요']],FP.lv)}</div></div>
+   <div class="col" style="gap:8px"><b class="lbl">우리 반을 골라요</b><div class="fpcls">${Array.from({length:FP.nc},(_,i)=>`<button class="sbtn ${FP.cls===i+1?'on':''}" data-cl="${i+1}">${i+1}반</button>`).join('')}</div></div>
    <div class="row" style="justify-content:space-between"><label class="row" style="gap:8px;font-family:var(--f-d);font-size:24px">🙋 도전자 번호 <input id="fpNo" inputmode="numeric" maxlength="3" value="${esc(FP.no)}" placeholder="생략 가능" style="width:130px;font-size:26px;border:0;border-radius:12px;padding:6px 10px"></label><button class="btn go big" id="go">추격 시작! 🐾</button></div></div>
    <div class="card col" style="gap:10px"><h2 style="font-size:26px">🏆 반별 최고 기록</h2><p class="soft" style="margin:0;font-size:16px">${FP.n}문제 · ${['','① 단어','② 문장','③ 움직임'][FP.lv]} 기준</p>
     <div class="fprank" style="grid-template-columns:repeat(${Math.min(5,FP.nc)},1fr)">${board.map(x=>`<div class="${x.c===FP.cls?'me':''}"><b>${x.c}반</b><span>${x.b?x.b.t.toFixed(1)+'초':'-'}</span><small>${x.b&&x.b.no?x.b.no+'번':''}</small></div>`).join('')}</div>
     <h3 style="font-family:var(--f-d);font-weight:400;font-size:22px;margin:6px 0 0">${FP.cls}반 순위</h3>
-    ${mine.length?`<ol class="fptop">${mine.map(x=>`<li><b>${x.t.toFixed(1)}초</b> ${x.no?x.no+'번':''}</li>`).join('')}</ol>`:'<p class="soft" style="margin:0">아직 기록이 없어요. 첫 기록에 도전!</p>'}</div></div>`);
+    ${mine.length?`<ol class="fptop">${mine.map(x=>`<li><b>${x.t.toFixed(1)}초</b> ${x.no?x.no+'번':''}</li>`).join('')}</ol>`:'<p class="soft" style="margin:0">아직 기록이 없어요. 첫 기록에 도전!</p>'}<button class="btn sm" id="fpClr" style="justify-self:end;margin-top:6px">기록 모두 지우기</button></div></div>`);
   gBind();
   $$('[data-cl]').forEach(x=>x.onclick=()=>{FP.cls=+x.dataset.cl;FP.no=$('#fpNo').value;fpSetup()});
   $$('[data-nqd]').forEach(x=>x.onclick=()=>{FP.n=Math.max(10,Math.min(30,FP.n+(+x.dataset.nqd)));FP.no=$('#fpNo').value;fpSetup()});
-  $$('[data-ncd]').forEach(x=>x.onclick=()=>{FP.nc=Math.max(1,Math.min(20,FP.nc+(+x.dataset.ncd)));FP.no=$('#fpNo').value;fpSetup();const d=$('.fpcfg');if(d)d.open=true});
+  $$('[data-ncd]').forEach(x=>x.onclick=()=>{FP.nc=Math.max(1,Math.min(20,FP.nc+(+x.dataset.ncd)));FP.no=$('#fpNo').value;fpSetup()});
   $('#fpClr').onclick=e=>{const b=e.currentTarget;if(!b.dataset.sure){b.dataset.sure='1';b.textContent='정말 지울까요?';return}LS.set('mt_fp_rec',{});fpSetup();toast('기록을 모두 지웠어요')};
   $$('[data-lv]').forEach(x=>x.onclick=()=>{FP.lv=+x.dataset.lv;FP.no=$('#fpNo').value;fpSetup()});
   const st=()=>{FP.no=$('#fpNo').value.trim().replace(/\D/g,'');LS.set('mt_fp_cfg',FP);fpStart()};
@@ -1189,7 +1194,7 @@ const EN_DICT={
 "글자를 읽을까, 색을 말할까? 헷갈려도 재미있어요.":"Read the word or say the color? Tricky but fun!",
 /* --- 발자국 --- */
 "도둑이 색깔 발자국을 남기고 도망쳤어요! 들리는 색 발자국을 터치해요. 한 명씩 도전하고, 가장 빠른 기록이 우리 반 기록이 돼요.":"The thief left colored footprints! Touch the color you hear. One student at a time — the fastest time becomes the class record.",
-"우리 반":"Our class","문제 수":"Questions","#~#개":"#–#",
+"우리 반":"Our class","우리 반을 골라요":"Choose your class","#~#반":"Class #–#","문제 수":"Questions","#~#개":"#–#",
 "학년 반 개수":"Number of classes","#개 반":"# classes","기록 모두 지우기":"Clear all records",
 "① 단어 (Red!)":"① Word (Red!)","② 문장 (It's red.)":"② Sentence (It's red.)","③ 발자국이 움직여요":"③ Moving footprints",
 "🙋 도전자 번호":"Player no.","추격 시작! 🐾":"Start the chase!",
