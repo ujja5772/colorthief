@@ -322,8 +322,8 @@ const RECS=[[20,'정확하고 또렷하게'],[16,'대체로 정확'],[12,'일부
 let VOICE=null,SPEED=LS.get('mt_speed','slow');
 function pickVoice(){try{const vs=speechSynthesis.getVoices();VOICE=vs.find(v=>/en[-_]US/i.test(v.lang)&&/Google/i.test(v.name))||vs.find(v=>/en[-_]US/i.test(v.lang))||vs.find(v=>/^en/i.test(v.lang))||null}catch(e){}}
 if('speechSynthesis' in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
-function speak(t){return new Promise(res=>{if(!('speechSynthesis' in window))return res();const u=new SpeechSynthesisUtterance(t);if(VOICE)u.voice=VOICE;u.lang='en-US';u.rate=SPEED==='slow'?.75:.95;let f=false;const end=()=>{if(!f){f=true;res()}};u.onend=end;u.onerror=end;setTimeout(end,1800+t.length*170);try{speechSynthesis.speak(u)}catch(e){end()}})}
-const hush=()=>{try{speechSynthesis.cancel()}catch(e){}};
+function speak(t){return new Promise(res=>{if(!('speechSynthesis' in window))return res();const u=new SpeechSynthesisUtterance(t);if(VOICE)u.voice=VOICE;u.lang='en-US';u.rate=SPEED==='slow'?.75:.95;let f=false;const end=()=>{if(!f){f=true;res()}};u.onend=end;u.onerror=end;const go=()=>{setTimeout(end,1800+t.length*170);try{speechSynthesis.speak(u)}catch(e){end()}};const d=180-(performance.now()-HUSHT);d>0?setTimeout(go,d):go()})}
+let SAYGEN=0,HUSHT=0;const hush=()=>{SAYGEN++;HUSHT=performance.now();try{speechSynthesis.cancel()}catch(e){}};
 let AC=null;
 function ding(ok=true){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const t=AC.currentTime;(ok?[523,659,784]:[330,247]).forEach((f,i)=>{const o=AC.createOscillator(),g=AC.createGain();o.type=ok?'triangle':'square';o.frequency.value=f;o.connect(g);g.connect(AC.destination);g.gain.setValueAtTime(.0001,t+i*.08);g.gain.exponentialRampToValueAtTime(ok?.15:.05,t+i*.08+.02);g.gain.exponentialRampToValueAtTime(.0001,t+i*.08+.3);o.start(t+i*.08);o.stop(t+i*.08+.35)})}catch(e){}}
 function toast(m){const t=document.createElement('div');t.className='tst';t.textContent=m;$('#toast').appendChild(t);setTimeout(()=>t.remove(),2600)}
@@ -933,7 +933,7 @@ function wpRound(){WP.round++;
       ${R.picked!=null&&R.opts[R.picked].real?'<div class="row" style="justify-content:center"><button class="btn go big" id="wpNext">다음 전단 📜</button></div>':''}</div></div>`);
     gBind();$$('canvas[data-oc]').forEach(c=>paintSus(c,k,R.opts[+c.dataset.oc].cs,{scale:.47}));
     $$('[data-l]').forEach(b=>b.onclick=async()=>{const l=lines[+b.dataset.l];hush();b.classList.add('hl');await speak(l.a);await speak(l.b);b.classList.remove('hl')});
-    $('#wpAll').onclick=async()=>{hush();for(const l of lines){await speak(l.a);await speak(l.b)}};
+    $('#wpAll').onclick=async()=>{hush();const g=SAYGEN;for(const l of lines){if(g!==SAYGEN)return;await speak(l.a);if(g!==SAYGEN)return;await speak(l.b)}};
     $$('[data-o]').forEach(b=>b.onclick=()=>{if(R.picked!=null&&R.opts[R.picked].real)return;R.picked=+b.dataset.o;WP.tries++;if(R.opts[R.picked].real){WP.solved++;confetti(120);ding(true);hush();speak("That's right!")}else ding(false);draw()});
     const nx=$('#wpNext');if(nx)nx.onclick=wpRound};
   draw();
@@ -1089,9 +1089,9 @@ function hsSetup(){
   $$('[data-rd]').forEach(x=>x.onclick=()=>{HS.rounds=+x.dataset.rd;sv()});$$('[data-sc]').forEach(x=>x.onclick=()=>{HS.sec=+x.dataset.sc;sv()});
   $('#go').onclick=()=>{loadAll().then(HS.mode==='count'?hsCount:hsFind)};
 }
-function hsBoard(crowd,lay){return `<div class="hsfield" id="hsF">${crowd.map((f,i)=>{const L=lay[i];return `<button class="hsp" data-i="${i}" style="left:${L.x/10}%;top:${L.y/5.6}%;height:${L.h/5.6}%;${L.flip?'--fx:-1':''}"><img src="${susImg(f.k,f.cs,.32,true)}" alt="" draggable="false"></button>`}).join('')}</div>`}
+function hsBoard(crowd,lay,front=[]){return `<div class="hsfield" id="hsF">${crowd.map((f,i)=>{const L=lay[i];return `<button class="hsp" data-i="${i}" style="left:${L.x/10}%;top:${L.y/5.6}%;height:${L.h/5.6}%;${L.flip?'--fx:-1;':''}${front.includes(i)?'z-index:2;':''}"><img src="${susImg(f.k,f.cs,.32,true)}" alt="" draggable="false"></button>`}).join('')}</div>`}
 const clueHTML=cl=>cl.map(c=>`<span class="hsclue"><span class="soft">Look at the ${c.en}.</span> <b>It's ${c.color}.</b></span>`).join('');
-const clueSay=async cl=>{hush();for(const c of cl){await speak(`Look at the ${c.en}.`);await speak(`It's ${c.color}.`)}};
+const clueSay=async cl=>{hush();const g=SAYGEN;for(const c of cl){if(g!==SAYGEN)return;await speak(`Look at the ${c.en}.`);if(g!==SAYGEN)return;await speak(`It's ${c.color}.`)}};
 /* 모드 1·2: 범인 한 명 찾기 */
 function hsFind(){gStop();
   const st={found:0,t0:0,pen:0,started:false,ended:false,timed:HS.mode==='time'};
@@ -1100,10 +1100,10 @@ function hsFind(){gStop();
     crowd.forEach((f,i)=>{if(i===ti)return;let g=0;while(hsMatch(f,clues)&&g++<50){const p=HS_PARTS(f.k).find(x=>x.en===pick(clues).en);if(p)f.cs[p.p]=pick(W9.filter(c=>c!==f.cs[p.p]))}});
     const lay=hsLayout(HS.n);
     app.innerHTML=shell(gHead('🔍 숨은 용의자 찾기',`<span class="pill" style="font-size:24px" id="hsCnt">${st.timed?`잡은 범인 ${st.found}명`:`${st.found} / ${HS.rounds}`}</span><span class="pill" style="font-size:28px;font-family:var(--f-e);font-weight:700" id="hsT">${st.timed?HS.sec+'초':'0.0초'}</span><button class="btn yel" id="hsSay">🔊 단서 듣기</button>`)+
-      `<div class="hsclues"><span class="stamp" style="font-size:22px">WANTED</span>${clueHTML(clues)}</div>${hsBoard(crowd,lay)}<p class="soft" id="hsMsg" style="text-align:center;font-size:19px;margin:6px 0 0">단서를 읽고 범인을 터치해요!</p>`);
+      `<div class="hsclues"><span class="stamp" style="font-size:22px">WANTED</span>${clueHTML(clues)}</div>${hsBoard(crowd,lay,[ti])}<p class="soft" id="hsMsg" style="text-align:center;font-size:19px;margin:6px 0 0">단서를 읽고 범인을 터치해요!</p>`);
     gBind();$('#hsSay').onclick=()=>clueSay(clues);
     $$('.hsp').forEach(b=>b.onclick=()=>{if(st.ended)return;const i=+b.dataset.i;
-      if(i===ti){b.classList.add('got');ding(true);st.found++;const hc=$('#hsCnt');if(hc)hc.textContent=st.timed?`잡은 범인 ${st.found}명`:`${st.found} / ${HS.rounds}`;hush();speak("That's right!");gT(()=>{if(!st.timed&&st.found>=HS.rounds)return end();round()},700)}
+      if(i===ti){b.classList.add('got');ding(true);st.found++;const hc=$('#hsCnt');if(hc)hc.textContent=st.timed?`잡은 범인 ${st.found}명`:`${st.found} / ${HS.rounds}`;hush();const sg=SAYGEN;Promise.race([speak("That's right!"),sleep(1400)]).then(()=>{if(sg===SAYGEN&&!st.ended)gT(()=>{if(!st.timed&&st.found>=HS.rounds)return end();round()},200)})}
       else{b.classList.remove('shake');void b.offsetWidth;b.classList.add('shake','no');ding(false);if(!st.timed){st.pen+=2;$('#hsMsg').textContent='앗! 단서를 다시 읽어 봐요 (+2초)'}else $('#hsMsg').textContent='앗! 단서를 다시 읽어 봐요'}});
     clueSay(clues);
     if(!st.started){st.started=true;st.t0=performance.now();gI(()=>{const t=$('#hsT');if(!t)return;const el=(performance.now()-st.t0)/1000;
@@ -1129,7 +1129,7 @@ function hsCount(){gStop();let lv=1,score=0,q=0;
       cnt=crowd.filter(o=>hsMatch(o,clues)).length}while((cnt<2||cnt>9)&&g++<40);
     const lay=hsLayout(HS.n);let answered=false;
     app.innerHTML=shell(gHead('🔢 몇 명 있을까?',`<span class="pill" style="font-size:22px">${q}번째 문제</span><span class="pill" style="font-size:22px">맞힌 문제 ${score}</span><button class="btn yel" id="hsSay">🔊 단서 듣기</button>`)+
-      `<div class="hsclues"><span style="font-family:var(--f-d);font-size:24px">이런 사람은 모두 몇 명일까요?</span>${clueHTML(clues)}</div>${hsBoard(crowd,lay)}
+      `<div class="hsclues"><span style="font-family:var(--f-d);font-size:24px">이런 사람은 모두 몇 명일까요?</span>${clueHTML(clues)}</div>${hsBoard(crowd,lay,crowd.map((o,i)=>hsMatch(o,clues)?i:-1))}
        <div class="hsnums">${Array.from({length:10},(_,i)=>`<button class="btn" data-n="${i}">${i}</button>`).join('')}<button class="btn sm" id="hsShow">정답 보기</button></div>`);
     gBind();$('#hsSay').onclick=()=>clueSay(clues);clueSay(clues);
     const reveal=(pickN)=>{if(answered)return;answered=true;const ok=pickN===cnt;$$('.hsp').forEach(b=>{const m=hsMatch(crowd[+b.dataset.i],clues);b.classList.add(m?'got':'dim')});
@@ -1334,7 +1334,7 @@ function isBlock(el){const d=getComputedStyle(el).display;if(d.includes('flex')|
 const PARTKO=/(서류 가방|머리카락|티셔츠|원피스|목도리|넥타이|스웨터|모자|가방|우산|코트|치마|풍선|공)/g;
 const SKIP='script,style,svg,canvas,input,select,textarea,.tr,.en,#printArea,.wsa4,.c4pop';
 function translateTree(root){
-  if(!root||root.nodeType!==1)return;
+  if(!root||root.nodeType!==1)return;if(root.closest&&root.closest('#printArea,.wsa4'))return;
   const walk=el=>{
     if(el.matches(SKIP))return;
     if(el.dataset.trd)return;
