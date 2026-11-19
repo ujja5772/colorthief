@@ -275,6 +275,22 @@ html.bi .logo .tr{font-size:.55em}
 html.bi .hubc .htitle .tr{font-family:var(--f-t);font-weight:800;font-size:17px;color:#857B95;margin:0}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:900px){.split{grid-template-columns:1fr}.lineup{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.ffset{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:18px;max-width:1240px;margin:10px auto 0;align-items:start}
+.ffno{font-family:var(--f-d);font-size:26px;min-width:130px;text-align:center}
+.ffprev svg{width:100%;height:auto;max-height:calc(100vh - 230px);display:block}
+.ffplay{max-width:900px;margin:20px auto 0;display:grid;gap:22px;padding:30px}
+.ffbig{margin:0;text-align:center;font-family:var(--f-d);font-size:64px}
+.ffprog{display:flex;justify-content:center;gap:12px}
+.ffdot{font-size:34px;opacity:.25;filter:grayscale(1)}.ffdot.done{opacity:.9}.ffdot.now{opacity:1;filter:none;transform:scale(1.25)}
+.ffrev{display:grid;grid-template-columns:auto minmax(260px,1fr);gap:18px;justify-content:center;align-items:start}
+.ffmap{padding:10px}.ffmap svg{height:calc(100vh - 210px);width:auto;max-width:62vw;display:block}
+.ffseq{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:22px}.ffseq span{display:inline-flex;align-items:center;gap:6px}
+.ffws .ffsv{flex:1;min-height:0;display:flex;justify-content:center}.ffws .ffsv svg{height:100%;width:auto;max-width:100%}
+.ffws .wsi{font-size:10pt;line-height:1.35}
+.ffmapno{border:1.5px solid #000;border-radius:3mm;padding:0 2mm;font-size:10pt;margin-left:1mm}
+.ffans{display:flex;justify-content:space-between;font-size:11.5pt;border-top:2px solid #000;padding-top:2mm}
+.ffsvg{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 </style>
 </head>
 <body>
@@ -808,9 +824,10 @@ const HUB=[
   {h:'3차시 · 읽기',items:[{id:'wp',ic:'📜',t:'수배 전단을 읽어라',d:'"Look at the cap. It\'s blue." 전단을 읽고 진짜 범인을 골라요.',tag:'읽기 · 반 전체'},{id:'hs',ic:'🔍',t:'숨은 용의자 찾기',d:'사람들이 가득한 거리에서 단서에 맞는 범인을 찾아요! 기록 재기 · 제한 시간 · 몇 명 있을까?',tag:'읽기·듣기 · 반 기록'},{id:'mm',ic:'🃏',t:'단어 짝 맞추기',d:'색 단어 카드와 색 카드를 뒤집어 짝을 찾아요.',tag:'읽기 · 개별/팀'},{id:'st',ic:'🚦',t:'스트루프 챌린지',d:'글자를 읽을까, 색을 말할까? 헷갈려도 재미있어요.',tag:'읽기 · 반 전체'}]},
  
 ];
+HUB[0].items.push({id:'ff',ic:'👣',t:'발자국을 따라가라',d:'모두 활동지를 들고, 들리는 색깔 발자국을 따라 선을 그어 숨은 도둑을 찾아요.',tag:'듣기 · 활동지 · 반 전체'});
 function renderClass(){
   gStop();
-  if(G.id)return ({hs:hsSetup,px:pxSetup,fp:fpSetup,c4:c4Setup,wp:wpSetup,mm:mmSetup,mc:mcSetup,st:stSetup})[G.id]();
+  if(G.id)return ({ff:ffSetup,hs:hsSetup,px:pxSetup,fp:fpSetup,c4:c4Setup,wp:wpSetup,mm:mmSetup,mc:mcSetup,st:stSetup})[G.id]();
   app.innerHTML=shell(`<div class="row" style="justify-content:space-between;margin:6px 0 16px"><div><h1 style="font-size:42px">🏫 수사 본부</h1><p class="soft" style="margin:4px 0 0;font-size:20px">범인을 잡으려면 수사 훈련이 필요해요! 전자칠판으로 반 전체가 함께 해요.</p></div><span class="stamp" style="font-size:24px">TRAINING</span></div>
    <div class="hgrid hubgrid2">${HUB.map((g,gi)=>g.items.map(it=>`<button class="hcard hubc" data-g="${it.id}"><span class="hrow"><span class="htag hh${gi}">${g.h}</span><span class="hic">${it.ic}</span></span><b class="htitle">${it.t}</b><span class="hdesc">${it.d}</span><span class="hfoot">${it.tag}</span><span class="hgo">→</span></button>`).join('')).join('')}</div>`);
   $$('[data-g]').forEach(b=>b.onclick=()=>{G.id=b.dataset.g;renderClass()});
@@ -953,6 +970,114 @@ async function wsPrint(){
     $$('[data-n]',ov).forEach(b=>b.onclick=()=>{WP.rows=+b.dataset.n;draw()});
     $('#wsX',ov).onclick=()=>ov.remove();
     $('#wsGo',ov).onclick=()=>{let pa=$('#printArea');if(!pa){pa=document.createElement('div');pa.id='printArea';document.body.appendChild(pa)}pa.className='ws';pa.innerHTML=wsHTML();
+      setTimeout(()=>{try{window.print()}catch(e){}},300);setTimeout(()=>toast('인쇄 창이 안 뜨면 넷리파이에 올린 주소에서 열어 주세요'),1500)};
+    const pg=$('.wspage',ov),a4=$('.wsa4',ov);a4.style.zoom=1;const z=Math.min(1,(pg.clientWidth-16)/a4.offsetWidth,(pg.clientHeight-16)/a4.offsetHeight);a4.style.zoom=z};
+  draw()}
+
+
+/* ---------- 듣기 2. 발자국을 따라가라 (활동지 + 전자칠판) ---------- */
+let FF=Object.assign({map:1,lv:2,twice:1,bw:0},LS.get('mt_ff_cfg',{}));
+const ffSv=()=>LS.set('mt_ff_cfg',FF);
+const FF_R=6,FF_C=8,FF_MAX=30,FF_S0=2,FF_S1=5;
+function ffRng(seed){let a=(seed*2654435761)>>>0;return()=>{a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
+function ffShuf(a,R){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(R()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+// 한 줄 8칸 = 색 4개 × 2번. 바로 옆·두 칸 옆은 다른 색 → 아래로 갈 수 있는 3칸은 늘 다른 색, 같은 색은 다른 범인 쪽에 있어요.
+function ffGrid(n){const R=ffRng(n*7919+13);const g=[];
+  for(let r=0;r<FF_R;r++){let row=null;
+    for(let t=0;t<4000&&!row;t++){const cs=t%200===0||!g._cs?(g._cs=ffShuf(W9,R).slice(0,4)):g._cs;const a=ffShuf([...cs,...cs],R);
+      let ok=a.every((c,i)=>(i+1>=FF_C||c!==a[i+1])&&(i+2>=FF_C||c!==a[i+2]));
+      if(ok&&r)ok=a.every((c,i)=>c!==g[r-1][i]);
+      if(ok&&!r)ok=new Set(a.slice(FF_S0,FF_S1+1)).size===FF_S1-FF_S0+1;
+      if(ok)row=a}
+    g._cs=null;g.push(row)}
+  return g}
+const ffEnd=p=>Math.floor(p[FF_R-1].c/2);
+function ffPath(g,used){let best=null;
+  for(let t=0;t<400;t++){let c=FF_S0+Math.floor(Math.random()*(FF_S1-FF_S0+1));const p=[{r:0,c}];
+    for(let r=1;r<FF_R;r++){const o=[c-1,c,c+1].filter(x=>x>=0&&x<FF_C);c=pick(o);p.push({r,c})}
+    best=p;if(!used.includes(ffEnd(p)))break}
+  return best.map(s=>Object.assign(s,{color:g[s.r][s.c]}))}
+const FF_COLW=80,FF_LM=36,FF_W=FF_LM+FF_COLW*FF_C+6,FF_TOP=62,FF_ROWH=66,FF_SUSY=FF_TOP+FF_R*FF_ROWH+8,FF_SUSH=128,FF_H=FF_SUSY+FF_SUSH+28;
+const ffX=c=>FF_LM+FF_COLW*c+FF_COLW/2,ffY=r=>FF_TOP+FF_ROWH*r+FF_ROWH/2,ffSX=i=>FF_LM+FF_COLW*2*i+FF_COLW;
+function ffFoot(cx,cy,color,o){const left=(o.r+o.c)%2===0,rot=left?-10:10,col=o.bw?'#fff':hex(color),st='stroke="#2B2638" stroke-width="2.6"',sc=o.bw?.52:.72;
+  const toes=[[-10,-27,4.6],[-2.5,-31,5.2],[5,-30.5,4.6],[11,-26.5,4],[15,-20.5,3.4]].map(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${col}" ${st}/>`).join('');
+  const f=`<g transform="translate(${cx},${o.bw?cy-6:cy+3}) rotate(${rot}) scale(${left?-sc:sc},${sc})"><path d="M1,-21 C13,-21 17,-9 15,3 C13,13 10,21 8,29 C6,38 -6,38 -8,29 C-10,21 -15,12 -15,0 C-15,-12 -10,-21 1,-21Z" fill="${col}" ${st}/>${toes}</g>`;
+  return f+(o.bw?`<text x="${cx}" y="${cy+27}" text-anchor="middle" font-size="13" font-weight="700" font-family="Arial,sans-serif" fill="#000">${color}</text>`:'')}
+function ffSVG(n,o={}){const g=ffGrid(n);const path=o.path||[],show=o.show||0;const on=new Set(path.slice(0,show).map(s=>s.r+'_'+s.c));
+  const x0=ffX(FF_S0)-34,x1=ffX(FF_S1)+34;
+  let s=`<svg class="ffsvg" viewBox="0 0 ${FF_W} ${FF_H}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">`;
+  s+=`<rect x="${x0}" y="4" width="${x1-x0}" height="34" rx="17" fill="#2B2638"/><text x="${(x0+x1)/2}" y="28" text-anchor="middle" font-size="19" font-weight="700" font-family="Arial,sans-serif" fill="#fff">🦹 START</text>`;
+  for(let c=FF_S0;c<=FF_S1;c++)s+=`<path d="M${ffX(c)-7},42 L${ffX(c)+7},42 L${ffX(c)},52Z" fill="#2B2638"/>`;
+  for(let r=0;r<FF_R;r++)s+=`<circle cx="${FF_LM/2}" cy="${ffY(r)}" r="14" fill="#fff" stroke="#2B2638" stroke-width="2"/><text x="${FF_LM/2}" y="${ffY(r)+6}" text-anchor="middle" font-size="17" font-weight="700" font-family="Arial,sans-serif" fill="#2B2638">${r+1}</text>`;
+  for(let r=1;r<FF_R;r++)s+=`<line x1="${FF_LM}" x2="${FF_W-6}" y1="${FF_TOP+FF_ROWH*r}" y2="${FF_TOP+FF_ROWH*r}" stroke="#ddd" stroke-width="1" stroke-dasharray="4 5"/>`;
+  if(show){const pts=[[ffX(path[0].c),40],...path.slice(0,show).map(p=>[ffX(p.c),ffY(p.r)])];if(show>=FF_R)pts.push([ffSX(ffEnd(path)),FF_SUSY+8]);
+    s+=`<polyline points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="#E8483B" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/>`}
+  for(let r=0;r<FF_R;r++)for(let c=0;c<FF_C;c++){const dim=show&&!on.has(r+'_'+c);s+=`<g opacity="${dim?.3:1}">${ffFoot(ffX(c),ffY(r),g[r][c],{r,c,bw:o.bw})}</g>`}
+  path.slice(0,show).forEach((p,i)=>{s+=`<circle cx="${ffX(p.c)+22}" cy="${ffY(p.r)-18}" r="11" fill="#E8483B" stroke="#fff" stroke-width="2.5"/><text x="${ffX(p.c)+22}" y="${ffY(p.r)-13.5}" text-anchor="middle" font-size="13" font-weight="700" font-family="Arial,sans-serif" fill="#fff">${i+1}</text>`});
+  ['a','b','c','d'].forEach((k,i)=>{const hit=show>=FF_R&&ffEnd(path)===i,x=ffSX(i);
+    s+=`<rect x="${x-70}" y="${FF_SUSY}" width="140" height="${FF_SUSH}" rx="14" fill="${hit?'#FFE9A8':'#fff'}" stroke="${hit?'#E8483B':'#2B2638'}" stroke-width="${hit?5:2}"/>`;
+    if(SUS[k])s+=`<image href="${o.imgs&&o.imgs[k]||''}" x="${x-62}" y="${FF_SUSY+4}" width="124" height="${FF_SUSH-8}" preserveAspectRatio="xMidYMid meet"/>`;
+    s+=`<text x="${x}" y="${FF_SUSY+FF_SUSH+23}" text-anchor="middle" font-size="22" font-weight="700" font-family="Arial,sans-serif" fill="#2B2638">${'ABCD'[i]}</text>`});
+  return s+'</svg>'}
+let FF_IMGS=null;
+const ffImgs=()=>{if(!FF_IMGS)FF_IMGS=Object.fromEntries(['a','b','c','d'].map(k=>[k,susImg(k,null,.3)]));return FF_IMGS};
+const ffSay=c=>FF.lv===1?c[0].toUpperCase()+c.slice(1)+'.':FF.lv===2?`It's ${c}.`:`What color is it? It's ${c}.`;
+const FF_NUM=['one','two','three','four','five','six'];
+async function ffSpeak(c,i){hush();const g=SAYGEN;if(i!=null){await speak(`Number ${FF_NUM[i]}.`);await sleep(250);if(g!==SAYGEN)return}await speak(ffSay(c));if(FF.twice&&g===SAYGEN){await sleep(900);if(g===SAYGEN)await speak(ffSay(c))}}
+
+async function ffSetup(){await loadAll();const im=ffImgs();
+  app.innerHTML=shell(gHead('👣 발자국을 따라가라')+`<div class="ffset">
+   <div class="folder"><div class="col" style="gap:16px">
+    <p style="margin:0;font-size:22px">도둑이 <b>색깔 발자국</b>을 남기고 도망쳤어요! 모두 <b>활동지</b>를 한 장씩 받고, 들리는 색 발자국을 따라 선을 그어 도둑이 숨은 곳을 찾아요.</p>
+    <div class="col" style="gap:6px"><b class="lbl">지도 번호 (활동지와 같아야 해요)</b><div class="row" style="gap:8px"><button class="sbtn" id="ffPrev" style="padding:8px 16px">◀</button><span class="ffno">지도 ${FF.map}번</span><button class="sbtn" id="ffNext" style="padding:8px 16px">▶</button><button class="sbtn" id="ffRnd" style="padding:8px 14px">🎲 바꾸기</button></div></div>
+    <div class="col" style="gap:6px"><b class="lbl">듣기 단계</b>${lvlBtns('fl',[[1,'① Red.'],[2,"② It's red."],[3,'③ What color is it? It\'s red.']],FF.lv)}</div>
+    <div class="col" style="gap:6px"><b class="lbl">두 번씩 읽어 주기</b>${lvlBtns('tw',[[1,'🔁 켜기'],[0,'1번만']],FF.twice)}</div>
+    <div class="row" style="justify-content:space-between;gap:10px"><button class="btn yel" id="ffPrint">🖨 활동지 미리 보기 · 인쇄</button><button class="btn go big" id="go">추격 시작! 👣</button></div>
+   </div></div>
+   <div class="card ffprev">${ffSVG(FF.map,{imgs:im})}<p class="soft" style="margin:6px 0 0;font-size:16px;text-align:center">활동지 지도 미리 보기 · 한 장으로 길 3번까지 할 수 있어요</p></div></div>`);
+  gBind();const re=()=>{ffSv();ffSetup()};
+  $('#ffPrev').onclick=()=>{FF.map=FF.map>1?FF.map-1:FF_MAX;re()};$('#ffNext').onclick=()=>{FF.map=FF.map<FF_MAX?FF.map+1:1;re()};
+  $('#ffRnd').onclick=()=>{let n;do{n=1+Math.floor(Math.random()*FF_MAX)}while(n===FF.map);FF.map=n;re()};
+  $$('[data-fl]').forEach(x=>x.onclick=()=>{FF.lv=+x.dataset.fl;re()});$$('[data-tw]').forEach(x=>x.onclick=()=>{FF.twice=+x.dataset.tw;re()});
+  $('#ffPrint').onclick=ffPrint;$('#go').onclick=()=>{G.ff={round:0,used:[]};ffRound()};
+}
+function ffRound(){const st=G.ff;st.round++;st.path=ffPath(ffGrid(FF.map),st.used);st.used.push(ffEnd(st.path));st.i=0;ffStep()}
+function ffStep(){const st=G.ff,i=st.i,last=i>=FF_R;
+  const prog=Array.from({length:FF_R},(_,j)=>`<span class="ffdot ${j<i?'done':j===i?'now':''}">👣</span>`).join('');
+  app.innerHTML=shell(gHead('👣 발자국을 따라가라',`<span class="pill" style="font-size:22px">🗺 지도 ${FF.map}번</span><span class="pill" style="font-size:24px;background:var(--ink);color:#fff">길 ${st.round}번</span>`)+
+   `<div class="ffplay card"><div class="ffprog">${prog}</div>
+    ${last?`<p class="ffbig">🏁 도착!</p><p style="margin:0;font-size:26px;text-align:center">도둑은 어디에 숨었을까요? 활동지 <b>길 ${st.round}번</b> 칸에 범인을 적어요.</p>
+      <div class="row" style="justify-content:center;gap:12px"><button class="btn" id="ffAgain">🔁 처음부터 다시 듣기</button><button class="btn go big" id="ffShow">정답 공개 🕵</button></div>`
+    :`<p class="ffbig">👂 ${i+1}번째 줄</p><p style="margin:0;font-size:24px;text-align:center" class="soft">활동지 <b>${i+1}번 줄</b>에서 들리는 색 발자국으로 선을 이어요.<br>한 줄씩 아래로, 바로 아래나 대각선으로만 갈 수 있어요.</p>
+      <div class="row" style="justify-content:center;gap:12px"><button class="btn" id="ffRe">🔊 다시 듣기</button><button class="btn go big" id="ffNx">${i<FF_R-1?'다음 발자국 ▶':'마지막 발자국 끝 ▶'}</button></div>`}
+   </div>`);
+  gBind();
+  if(!last){gT(()=>ffSpeak(st.path[i].color,i),350);$('#ffRe').onclick=()=>ffSpeak(st.path[i].color,i);$('#ffNx').onclick=()=>{hush();st.i++;ffStep()}}
+  else{$('#ffAgain').onclick=()=>{hush();st.i=0;ffStep()};$('#ffShow').onclick=()=>{hush();ffReveal(0)}}
+}
+function ffReveal(show){const st=G.ff,im=ffImgs(),k='abcd'[ffEnd(st.path)],done=show>FF_R;
+  app.innerHTML=shell(gHead('👣 발자국을 따라가라',`<span class="pill" style="font-size:22px">🗺 지도 ${FF.map}번</span><span class="pill" style="font-size:24px;background:var(--ink);color:#fff">길 ${st.round}번</span>`)+
+   `<div class="ffrev"><div class="card ffmap">${ffSVG(FF.map,{imgs:im,path:st.path,show:Math.min(show,FF_R)})}</div>
+    <div class="col" style="gap:12px;align-content:start">
+     <div class="card col" style="gap:6px"><b class="lbl">들은 발자국</b><div class="ffseq">${st.path.slice(0,Math.min(show,FF_R)).map((p,j)=>`<span>${j+1}. ${dot(p.color,22)} ${p.color}</span>`).join('')}</div></div>
+     ${done?`<div class="card col" style="gap:8px;text-align:center"><p class="ffbig" style="margin:0">범인은 ${k.toUpperCase()}!</p><p style="margin:0;font-size:22px">🎉 맞혔나요? 활동지에 ⭕ 해요.</p></div>
+      <div class="row" style="justify-content:center;gap:10px">${st.round<3?`<button class="btn go big" id="ffNext2">다음 길 (${st.round+1}번) ▶</button>`:`<button class="btn go big" id="ffEnd">수사 끝! 🏁</button>`}</div>`:''}
+    </div></div>`);
+  gBind();
+  if(!done){gT(()=>ffReveal(show+1),show===0?400:650)}else{confetti(110);ding(true);hush();speak(`It's ${k.toUpperCase()}!`)}
+  const n2=$('#ffNext2');if(n2)n2.onclick=ffRound;const e=$('#ffEnd');if(e)e.onclick=()=>{G.ff=null;ffSetup()};
+}
+function ffSheet(){return [0,1].map(()=>`<section class="wsh ffws"><header><b style="white-space:nowrap">👣 발자국을 따라가라 <span class="ffmapno">지도 ${FF.map}번</span></b><span style="white-space:nowrap">___반 ___번 이름 ________</span></header>
+   <p class="wsi">① 선생님이 말하는 <b>색깔 발자국</b>을 따라 선을 그어요. START 아래 4개 중에서 출발해 한 줄씩 아래로, <b>바로 아래나 대각선</b> 발자국으로만 가요.<br>② 도착한 곳의 범인을 적어요. 길마다 다른 색 연필로 그으면 헷갈리지 않아요.</p>
+   <div class="ffsv">${ffSVG(FF.map,{imgs:ffImgs(),bw:FF.bw})}</div>
+   <footer class="ffans">${[1,2,3].map(n=>`<span>길 ${n} 범인 ( &nbsp;&nbsp;&nbsp;&nbsp; ) ⭕❌</span>`).join('')}</footer></section>`).join('')}
+async function ffPrint(){await loadAll();const ov=document.createElement('div');ov.className='wsov';document.body.appendChild(ov);
+  const draw=()=>{ov.innerHTML=`<div class="wsbar"><b style="font-family:var(--f-d);font-weight:400;font-size:24px">🖨 발자국 지도 활동지 · 지도 ${FF.map}번 · A4 가로 1장에 2장</b>
+     <div class="row"><span style="font-family:var(--f-d)">인쇄</span><button class="sbtn ${FF.bw?'':'on'}" data-bw="0" style="padding:6px 12px">🎨 컬러</button><button class="sbtn ${FF.bw?'on':''}" data-bw="1" style="padding:6px 12px">⬛ 흑백 (색 단어)</button><button class="btn yel" id="wsGo">🖨 인쇄하기</button><button class="btn sm" id="wsX">닫기</button></div></div>
+    <div class="wspage"><div class="wsa4">${ffSheet()}</div></div><p class="wsnote">인쇄 창에서 <b>용지: A4 · 방향: 가로</b>로 해 주세요. 컬러 인쇄를 권해요. 흑백 프린터라면 <b>흑백 (색 단어)</b>를 고르세요. 발자국에 색 단어가 적혀 나와요.</p>`;
+    $$('[data-bw]',ov).forEach(b=>b.onclick=()=>{FF.bw=+b.dataset.bw;ffSv();draw()});
+    $('#wsX',ov).onclick=()=>ov.remove();
+    $('#wsGo',ov).onclick=()=>{let pa=$('#printArea');if(!pa){pa=document.createElement('div');pa.id='printArea';document.body.appendChild(pa)}pa.className='ws';pa.innerHTML=ffSheet();
       setTimeout(()=>{try{window.print()}catch(e){}},300);setTimeout(()=>toast('인쇄 창이 안 뜨면 넷리파이에 올린 주소에서 열어 주세요'),1500)};
     const pg=$('.wspage',ov),a4=$('.wsa4',ov);a4.style.zoom=1;const z=Math.min(1,(pg.clientWidth-16)/a4.offsetWidth,(pg.clientHeight-16)/a4.offsetHeight);a4.style.zoom=z};
   draw()}
@@ -1199,7 +1324,7 @@ const EN_DICT={
 "학년 반 개수":"Number of classes","#개 반":"# classes","기록 모두 지우기":"Clear all records",
 "① 단어 (Red!)":"① Word (Red!)","② 문장 (It's red.)":"② Sentence (It's red.)","③ 발자국이 움직여요":"③ Moving footprints",
 "🙋 도전자 번호":"Player no.","추격 시작! 🐾":"Start the chase!",
-"단서 읽어 주기":"Read clues aloud","🔊 켜기":"🔊 On","🔇 끄기":"🔇 Off","끄면 아이들이 단서를 직접 읽어요. 게임 중에 🔊 단서 듣기 버튼을 누르면 들을 수 있어요.":"When off, students read the clues themselves. Tap 🔊 Hear clues anytime during the game.","🏆 반별 최고 기록":"Best time by class","#문제 · ① 단어 기준":"# questions · ① Word","#문제 · ② 문장 기준":"# questions · ② Sentence","#문제 · ③ 움직임 기준":"# questions · ③ Moving",
+"단서 읽어 주기":"Read clues aloud","🔊 켜기":"🔊 On","🔇 끄기":"🔇 Off","끄면 아이들이 단서를 직접 읽어요. 게임 중에 🔊 단서 듣기 버튼을 누르면 들을 수 있어요.":"When off, students read the clues themselves. Tap 🔊 Hear clues anytime during the game.","👣 발자국을 따라가라":"👣 Follow the Footprints","발자국을 따라가라":"Follow the Footprints","모두 활동지를 들고, 들리는 색깔 발자국을 따라 선을 그어 숨은 도둑을 찾아요.":"Everyone holds a worksheet and draws a line along the footprint colors they hear to find the hidden thief.","듣기 · 활동지 · 반 전체":"Listening · Worksheet · Whole class","지도 번호 (활동지와 같아야 해요)":"Map no. (must match the worksheet)","지도 #번":"Map #","🎲 바꾸기":"🎲 Change","두 번씩 읽어 주기":"Read each one twice","🔁 켜기":"🔁 On","1번만":"Once","🖨 활동지 미리 보기 · 인쇄":"🖨 Preview & print worksheet","추격 시작! 👣":"Start the chase! 👣","활동지 지도 미리 보기 · 한 장으로 길 #번까지 할 수 있어요":"Worksheet map preview · up to # paths per sheet","🗺 지도 #번":"🗺 Map #","길 #번":"Path #","👂 발자국 #":"👂 Footprint #","다음 발자국 ▶":"Next footprint ▶","마지막 발자국 끝 ▶":"That was the last one ▶","🏁 도착!":"🏁 Arrived!","🔁 처음부터 다시 듣기":"🔁 Listen again from the start","정답 공개 🕵":"Reveal 🕵","들은 발자국":"Footprints you heard","수사 끝! 🏁":"Case closed! 🏁","🎨 컬러":"🎨 Color","⬛ 흑백 (색 단어)":"⬛ B&W (color words)","듣기 단계":"Listening level","👂 #번째 줄":"👂 Line #","🏆 반별 최고 기록":"Best time by class","#문제 · ① 단어 기준":"# questions · ① Word","#문제 · ② 문장 기준":"# questions · ② Sentence","#문제 · ③ 움직임 기준":"# questions · ③ Moving",
 "#반 순위":"Class # ranking","아직 기록이 없어요. 첫 기록에 도전!":"No records yet. Be the first!",
 "🔊 다시 듣기":"Listen again","잘 듣고 터치해요!":"Listen and touch!","앗! 다시 잘 들어 봐요 (+#초)":"Oops! Listen again (+# sec)",
 "체포 완료!":"Caught!","다음 도전자":"Next player","도전! 🐾":"Go!","🏆 기록 보기 · 설정":"Records · Settings",
