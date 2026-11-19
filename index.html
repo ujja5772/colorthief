@@ -291,6 +291,14 @@ html.bi .hubc .htitle .tr{font-family:var(--f-t);font-weight:800;font-size:17px;
 .ffmapno{border:1.5px solid #000;border-radius:3mm;padding:0 2mm;font-size:10pt;margin-left:1mm}
 .ffans{display:flex;justify-content:space-between;font-size:11.5pt;border-top:2px solid #000;padding-top:2mm}
 .ffsvg{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+
+.qrov{background:#FFF8EC!important}
+.qrwrap{display:flex;gap:28px;justify-content:center;align-items:center;flex:1;padding:10px 20px 20px;flex-wrap:wrap}
+.qrbox{padding:14px;background:#fff}.qrbox svg{width:min(56vh,440px);height:auto;display:block}
+.qrurl{font-size:20px;word-break:break-all;font-family:ui-monospace,Menlo,monospace;margin-top:4px}
+#printArea.qrp{display:flex!important;justify-content:center;align-items:center;height:188mm}
+.qrc{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4mm;text-align:center}
+.qrc b{font-size:28pt}.qrc svg{width:140mm;height:140mm}.qrcs{font-size:18pt}.qrcu{font-size:7.5pt;color:#444;word-break:break-all}
 </style>
 </head>
 <body>
@@ -421,7 +429,7 @@ function shell(inner){
   const nav=SMODE()?[]:[['home','🏠 처음'],['class','🏫 수사 본부'],['make','🖍️ 몽타주 만들기'],['oral','🕵️ 범인을 찾아라'],['teacher','🔒 교사']];
   return `<header class="top"><div class="top-in"><button class="logo" ${SMODE()?'':'data-go="home"'}><span>🔍</span><b>색깔을 훔쳐간 범인</b></button>
    <nav class="nav">${nav.map(([k,t])=>`<button data-go="${k}" class="${ROUTE.name===k?'on':''}">${t}</button>`).join('')}</nav>
-   <div class="right">${!STUDENT&&LOCKED&&!PIN?'<span class="pill" style="background:#FFE3E0;color:var(--stamp)">📝 평가 중</span><button class="btn sm" id="unlockT" title="선생님">🔒</button>':''}<label class="cls">반 <input id="clsIn" value="${esc(CLS)}" ${STUDENT?'readonly':''} aria-label="반"></label>${DEMO?'<button class="btn sm red" id="demoOff" title="체험 끝내기">🎮 체험 중 ✕</button>':''}<button class="btn sm" id="biBtn" title="English">🌐 한/EN</button><button class="btn sm" id="spd">${SPEED==='slow'?'🐢 천천히':'🐇 보통'}</button></div></div></header><main>${inner}</main>`;
+   <div class="right">${!STUDENT&&LOCKED&&!PIN?'<span class="pill" style="background:#FFE3E0;color:var(--stamp)">📝 평가 중</span><button class="btn sm" id="unlockT" title="선생님">🔒</button>':''}<label class="cls">반 <input id="clsIn" value="${esc(CLS)}" ${STUDENT?'readonly':''} aria-label="반"></label>${DEMO?'<button class="btn sm red" id="demoOff" title="체험 끝내기">🎮 체험 중 ✕</button>':''}${!STUDENT&&!SMODE()?'<button class="btn sm" id="qrBtn">📱 학생 접속</button>':''}<button class="btn sm" id="biBtn" title="English">🌐 한/EN</button><button class="btn sm" id="spd">${SPEED==='slow'?'🐢 천천히':'🐇 보통'}</button></div></div></header><main>${inner}</main>`;
 }
 document.addEventListener('click',e=>{const g=e.target.closest('[data-go]');if(g){e.preventDefault();go(g.dataset.go);return}
   if(e.target.closest('#demoOff')){endDemo();return}if(e.target.closest('#unlockT')){pinGate(()=>go('home'));return}const s=e.target.closest('#spd');if(s){SPEED=SPEED==='slow'?'normal':'slow';LS.set('mt_speed',SPEED);s.textContent=SPEED==='slow'?'🐢 천천히':'🐇 보통'}});
@@ -1476,6 +1484,70 @@ function applyBI(){document.documentElement.classList.toggle('bi',BI);const b=$(
 const trObs=new MutationObserver(ms=>{for(const m of ms)for(const n of m.addedNodes){if(n.nodeType===1&&!n.classList.contains('tr'))translateTree(n)}});
 trObs.observe(document.body,{childList:true,subtree:true});
 document.addEventListener('click',e=>{if(e.target.closest('#biBtn')){BI=!BI;LS.set('mt_bi',BI);applyBI()}});
+
+
+/* ---------- QR 코드 (바이트 모드 · 오류 정정 M · 1~10버전) ---------- */
+const QR=(()=>{
+  const EXP=new Array(512),LOG=new Array(256);let x=1;for(let i=0;i<255;i++){EXP[i]=x;LOG[x]=i;x<<=1;if(x&256)x^=0x11d}for(let i=255;i<512;i++)EXP[i]=EXP[i-255];
+  const mul=(a,b)=>a&&b?EXP[LOG[a]+LOG[b]]:0;
+  function rsGen(n){let g=[1];for(let i=0;i<n;i++){const ng=new Array(g.length+1).fill(0);for(let j=0;j<g.length;j++){ng[j]^=g[j];ng[j+1]^=mul(g[j],EXP[i])}g=ng}return g}
+  function rsEC(data,n){const g=rsGen(n),r=new Array(n).fill(0);for(const d of data){const f=d^r[0];r.shift();r.push(0);if(f)for(let j=0;j<n;j++)r[j]^=mul(g[j+1],f)}return r}
+  // [ec per block, [[count, data codewords], ...]] for level M
+  const BL={1:[10,[[1,16]]],2:[16,[[1,28]]],3:[26,[[1,44]]],4:[18,[[2,32]]],5:[24,[[2,43]]],6:[16,[[4,27]]],7:[18,[[4,31]]],8:[22,[[2,38],[2,39]]],9:[22,[[3,36],[2,37]]],10:[26,[[4,43],[1,44]]]};
+  const AL={1:[],2:[6,18],3:[6,22],4:[6,26],5:[6,30],6:[6,34],7:[6,22,38],8:[6,24,42],9:[6,26,46],10:[6,28,50]};
+  function bch(v,poly,bits){let d=v<<bits;const pl=Math.floor(Math.log2(poly));while(d&&Math.floor(Math.log2(d))>=pl)d^=poly<<(Math.floor(Math.log2(d))-pl);return (v<<bits)|d}
+  function make(text){const bytes=Array.from(new TextEncoder().encode(text));let ver=0;
+    for(let v=1;v<=10;v++){const [,g]=BL[v];const cap=g.reduce((s,[c,d])=>s+c*d,0);if(4+(v<10?8:16)+bytes.length*8<=cap*8){ver=v;break}}
+    if(!ver)throw new Error('QR: 주소가 너무 길어요');
+    const [ecn,groups]=BL[ver],cap=groups.reduce((s,[c,d])=>s+c*d,0);
+    const bits=[];const put=(v,n)=>{for(let i=n-1;i>=0;i--)bits.push((v>>i)&1)};
+    put(4,4);put(bytes.length,ver<10?8:16);bytes.forEach(b=>put(b,8));put(0,Math.min(4,cap*8-bits.length));while(bits.length%8)bits.push(0);
+    const data=[];for(let i=0;i<bits.length;i+=8)data.push(parseInt(bits.slice(i,i+8).join(''),2));for(let p=0;data.length<cap;p++)data.push(p%2?0x11:0xEC);
+    const blocks=[];let k=0;groups.forEach(([c,d])=>{for(let i=0;i<c;i++){const b=data.slice(k,k+d);k+=d;blocks.push({d:b,e:rsEC(b,ecn)})}});
+    const out=[];const md=Math.max(...blocks.map(b=>b.d.length));for(let i=0;i<md;i++)blocks.forEach(b=>{if(i<b.d.length)out.push(b.d[i])});for(let i=0;i<ecn;i++)blocks.forEach(b=>out.push(b.e[i]));
+    const N=ver*4+17,M=[...Array(N)].map(()=>Array(N).fill(null)),F=[...Array(N)].map(()=>Array(N).fill(false));
+    const set=(r,c,v)=>{M[r][c]=v;F[r][c]=true};
+    const finder=(r,c)=>{for(let i=-1;i<=7;i++)for(let j=-1;j<=7;j++){const y=r+i,x=c+j;if(y<0||x<0||y>=N||x>=N)continue;const on=i>=0&&i<=6&&j>=0&&j<=6&&(i===0||i===6||j===0||j===6||(i>=2&&i<=4&&j>=2&&j<=4));set(y,x,on)}};
+    finder(0,0);finder(0,N-7);finder(N-7,0);
+    for(let i=8;i<N-8;i++){set(6,i,i%2===0);set(i,6,i%2===0)}
+    const al=AL[ver],L=al.length-1;al.forEach((r,ri)=>al.forEach((c,ci)=>{if((ri===0&&ci===0)||(ri===0&&ci===L)||(ri===L&&ci===0))return;for(let i=-2;i<=2;i++)for(let j=-2;j<=2;j++)set(r+i,c+j,Math.max(Math.abs(i),Math.abs(j))!==1)}))
+    for(let i=0;i<9;i++){if(!F[8][i])set(8,i,false);if(!F[i][8])set(i,8,false)}for(let i=0;i<8;i++){set(8,N-1-i,false);set(N-1-i,8,false)}set(N-8,8,true);
+    if(ver>=7){const vi=bch(ver,0x1F25,12);for(let i=0;i<18;i++){const b=!!((vi>>i)&1);set(Math.floor(i/3),N-11+i%3,b);set(N-11+i%3,Math.floor(i/3),b)}}
+    const cw=[];out.forEach(b=>{for(let i=7;i>=0;i--)cw.push((b>>i)&1)});let bi=0;
+    for(let c=N-1;c>=1;c-=2){if(c===6)c=5;for(let t=0;t<N;t++){const up=((c+1)&2)===0;const r=up?N-1-t:t;for(let d=0;d<2;d++){const x=c-d;if(F[r][x])continue;M[r][x]=bi<cw.length?!!cw[bi]:false;bi++}}}
+    const MASK=[(r,c)=>(r+c)%2===0,(r,c)=>r%2===0,(r,c)=>c%3===0,(r,c)=>(r+c)%3===0,(r,c)=>(Math.floor(r/2)+Math.floor(c/3))%2===0,(r,c)=>r*c%2+r*c%3===0,(r,c)=>(r*c%2+r*c%3)%2===0,(r,c)=>((r+c)%2+r*c%3)%2===0];
+    const fmtStd=(m,mask)=>{const f=bch((0<<3)|mask,0x537,10)^0x5412;const b=i=>!!((f>>i)&1);
+      for(let i=0;i<=5;i++)m[i][8]=b(i);m[7][8]=b(6);m[8][8]=b(7);m[8][7]=b(8);for(let i=9;i<15;i++)m[8][14-i]=b(i);
+      for(let i=0;i<8;i++)m[8][N-1-i]=b(i);for(let i=8;i<15;i++)m[N-15+i][8]=b(i);m[N-8][8]=true};
+    const pen=m=>{let p=0;for(let r=0;r<N;r++){let run=1;for(let c=1;c<N;c++){if(m[r][c]===m[r][c-1]){run++;if(run===5)p+=3;else if(run>5)p++}else run=1}}
+      for(let c=0;c<N;c++){let run=1;for(let r=1;r<N;r++){if(m[r][c]===m[r-1][c]){run++;if(run===5)p+=3;else if(run>5)p++}else run=1}}
+      for(let r=0;r<N-1;r++)for(let c=0;c<N-1;c++){const v=m[r][c];if(v===m[r+1][c]&&v===m[r][c+1]&&v===m[r+1][c+1])p+=3}
+      const pat=[1,0,1,1,1,0,1,0,0,0,0],pat2=[0,0,0,0,1,0,1,1,1,0,1];
+      for(let r=0;r<N;r++)for(let c=0;c<=N-11;c++){let a=true,b=true;for(let k=0;k<11;k++){const v=m[r][c+k]?1:0;if(v!==pat[k])a=false;if(v!==pat2[k])b=false}if(a)p+=40;if(b)p+=40}
+      for(let c=0;c<N;c++)for(let r=0;r<=N-11;r++){let a=true,b=true;for(let k=0;k<11;k++){const v=m[r+k][c]?1:0;if(v!==pat[k])a=false;if(v!==pat2[k])b=false}if(a)p+=40;if(b)p+=40}
+      let dark=0;m.forEach(row=>row.forEach(v=>{if(v)dark++}));p+=Math.floor(Math.abs(dark*100/(N*N)-50)/5)*10;return p};
+    let best=null,bp=1e9;
+    for(let k=0;k<8;k++){const m=M.map((row,r)=>row.map((v,c)=>F[r][c]?v:(MASK[k](r,c)?!v:v)));fmtStd(m,k);const p=pen(m);if(p<bp){bp=p;best=m}}
+    return best}
+  function svg(text,px=8,quiet=4){const m=make(text),N=m.length,S=N+quiet*2;let d='';
+    for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(m[r][c])d+=`M${c+quiet},${r+quiet}h1v1h-1z`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${S} ${S}" width="${S*px}" height="${S*px}" shape-rendering="crispEdges"><rect width="${S}" height="${S}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`}
+  return {make,svg}})();
+
+/* ---------- 학생 접속 QR ---------- */
+function qrOpen(){const ov=document.createElement('div');ov.className='wsov qrov';document.body.appendChild(ov);
+  const url=location.origin+location.pathname,isFile=location.protocol==='file:';let q='';try{q=isFile?'':QR.svg(url,10,4)}catch(e){}
+  ov.innerHTML=`<div class="wsbar"><b style="font-family:var(--f-d);font-weight:400;font-size:26px">📱 학생 접속 QR</b><div class="row">${isFile?'':'<button class="btn yel" id="qrPr">🖨 QR 인쇄</button>'}<button class="btn sm" id="qrX">닫기</button></div></div>
+   <div class="qrwrap"><div class="qrbox card">${isFile?'<p style="font-size:22px;padding:30px;max-width:360px">QR 코드는 <b>넷리파이 등에 올린 주소</b>로 열었을 때 만들어져요.<br>지금은 파일로 열려 있어요.</p>':q}</div>
+    <div class="col" style="gap:16px;max-width:520px">
+     </div></div>`;
+  $('#qrX',ov).onclick=()=>ov.remove();const pr=$('#qrPr',ov);if(pr)pr.onclick=()=>qrPrint(url);applyBI()}
+function qrPrint(url){let q='';try{q=QR.svg(url,4,2)}catch(e){return toast('QR을 만들 수 없어요')}
+  const card=`<div class="qrc"><b>🔍 색깔을 훔쳐간 범인</b>${q}<span class="qrcs">카메라로 찍으면 바로 열려요</span></div>`;
+  let pa=$('#printArea');if(!pa){pa=document.createElement('div');pa.id='printArea';document.body.appendChild(pa)}pa.className='qrp';pa.innerHTML=card;
+  setTimeout(()=>{try{window.print()}catch(e){}},300)}
+document.addEventListener('click',e=>{if(e.target.closest('#qrBtn'))qrOpen()});
+Object.assign(EN_DICT,{"📱 학생 접속":"📱 Student link","📱 학생 접속 QR":"📱 Student QR","주소":"Address","🖨 QR 인쇄":"🖨 Print QR"});
 
 applyBI();
 render();
