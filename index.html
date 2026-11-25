@@ -300,6 +300,7 @@ html.bi .hubc .htitle .tr{font-family:var(--f-t);font-weight:800;font-size:17px;
 .qrc{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4mm;text-align:center}
 .qrc b{font-size:28pt}.qrc svg{width:140mm;height:140mm}.qrcs{font-size:18pt}.qrcu{font-size:7.5pt;color:#444;word-break:break-all}
 .newb{display:inline-block;margin:0 auto 0 8px;align-self:center;background:#E8483B;color:#fff;font-family:var(--f-b,sans-serif);font-weight:800;font-size:13px;letter-spacing:.5px;padding:3px 8px;border-radius:999px;transform:translateY(-2px)}
+.regGrid.delmode .rg{outline:3px dashed var(--stamp,#E8483B);outline-offset:-3px}
 </style>
 </head>
 <body>
@@ -376,9 +377,12 @@ function demoApi(fn,args){const d=DB.load();
   if(fn==='mt_submit'){if(d.students[sk]!==args.p_pin)throw new Error('wrong student pin');d.cases.push({id:'demo-'+Date.now(),created_at:new Date().toISOString(),class_code:args.p_class,student_no:args.p_no,student_name:args.p_no+'번',suspect:args.p_suspect,colors:args.p_colors,statements:args.p_statements,written_auto:args.p_written_auto,audio:args.p_audio,audio_sec:args.p_audio_sec});DB.save(d);return null}
   if(fn==='mt_my_case'){if(d.students[sk]!==args.p_pin)throw new Error('wrong student pin');const c=d.cases.filter(c=>c.class_code===args.p_class&&c.student_no===args.p_no&&!(d.scores[c.id]||{}).hidden).sort((x,y)=>x.created_at<y.created_at?1:-1)[0];return c?[{suspect:c.suspect,colors:c.colors,created_at:c.created_at}]:[]}
   if(fn==='mt_reset_student_pin'){delete d.students[args.p_class+'|'+args.p_no];DB.save(d);return null}
+  if(fn==='mt_delete_student'){delete d.students[args.p_class+'|'+args.p_no];const b=d.cases.length;d.cases=d.cases.filter(c=>!(c.class_code===args.p_class&&c.student_no===args.p_no));DB.save(d);return b-d.cases.length}
   if(fn==='mt_class_students'){d.wrong=d.wrong||{};return Object.keys(d.students).filter(k=>k.startsWith(args.p_class+'|')).map(k=>{const no=k.split('|')[1];return {student_no:no,registered:true,wrong_count:d.wrong[k]||0,created_at:new Date().toISOString(),submits:d.cases.filter(c=>c.class_code===args.p_class&&c.student_no===no&&!(d.scores[c.id]||{}).hidden).length}})}
   if(fn==='mt_check_pin')return true;
   if(fn==='mt_get_lock')return LS.get('mt_demo_lock',false);
+  if(fn==='mt_get_free')return LS.get('mt_demo_free','{"on":false,"all":false,"games":["fp","hs","mm"]}');
+  if(fn==='mt_set_free'){LS.set('mt_demo_free',args.p_val);return null}
   if(fn==='mt_set_lock'){LS.set('mt_demo_lock',!!args.p_on);return null}
   if(fn==='mt_teacher_list'){const cls=args.p_class;if(cls&&!d.seeded.includes(cls)){d.cases.push(...demoSeed(cls));d.seeded.push(cls);DB.save(d)}
     return d.cases.filter(c=>(!cls||c.class_code===cls)&&!(d.scores[c.id]||{}).hidden).map(c=>{const s=d.scores[c.id]||{};return Object.assign({},c,{audio:undefined,has_audio:!!c.audio,written_score:s.written_score??null,record_score:s.record_score??null,oral_score:s.oral_score??null,lineup:s.lineup??null,memo:s.memo??null})})}
@@ -422,12 +426,21 @@ const STUDENT=/^#student/.test(location.hash);
 if(STUDENT){const m=location.hash.match(/^#student-(.+)$/);if(m)CLS=decodeURIComponent(m[1])}
 let ROUTE={name:STUDENT?'make':'home'};
 let REC=null;
-function go(name,p={}){if(SMODE()&&name!=='make')name='make';if(!PIN&&!STUDENT)checkLock();stopBlink();hush();if(typeof gStop==='function')gStop();if(name==='class')G.id=null;if(REC&&REC.state==='recording')try{REC.stop()}catch(e){}ROUTE=Object.assign({name},p);render();scrollTo(0,0)}
+function go(name,p={}){if(!allowRoute(name))name='make';if(!PIN&&!STUDENT)checkLock();if(SMODE())checkFree();stopBlink();hush();if(typeof gStop==='function')gStop();if(name==='class')G.id=null;if(REC&&REC.state==='recording')try{REC.stop()}catch(e){}ROUTE=Object.assign({name},p);render();scrollTo(0,0)}
 let LOCKED=false;
 const SMODE=()=>STUDENT||(LOCKED&&!PIN);
-async function checkLock(first){try{const v=!!(await API.rpc('mt_get_lock',{}));const ch=v!==LOCKED;LOCKED=v;if(SMODE()&&ROUTE.name!=='make'){ROUTE={name:'make'};render()}else if(ch||first)render()}catch(e){}}
+const CLASSES=['3-1','3-2','3-3','3-4'];
+const clsSelect=(id,st)=>`<select id="${id}" aria-label="반" style="${st}">${(CLASSES.includes(CLS)?CLASSES:[CLS,...CLASSES]).map(c=>`<option value="${esc(c)}" ${c===CLS?'selected':''}>${esc(c)}</option>`).join('')}</select>`;
+let FREE_SHOWN=null;
+let FREE={on:false,all:false,games:['fp','hs','mm']};
+const FREE_GAMES=[['fp','🐾 도둑의 발자국 추격'],['hs','🔍 숨은 용의자 찾기'],['mm','🃏 단어 짝 맞추기'],['st','🚦 스트루프 챌린지']];
+const FREEOK=()=>SMODE()&&FREE.on&&(FREE.all||SS.get('mt_done_'+CLS)==='1');
+const allowRoute=n=>!SMODE()||n==='make'||(n==='class'&&FREEOK());
+async function checkFree(){try{const v=JSON.parse(await API.rpc('mt_get_free',{})||'{}');FREE=Object.assign({on:false,all:false,games:['fp','hs','mm']},v);if(FREE_SHOWN!==FREEOK()){if(!allowRoute(ROUTE.name))ROUTE={name:'make'};if(!(ROUTE.name==='class'&&G.id))render()}}catch(e){}}
+setInterval(()=>{if(SMODE()&&!document.hidden)checkFree()},20000);
+async function checkLock(first){try{const v=!!(await API.rpc('mt_get_lock',{}));const ch=v!==LOCKED;LOCKED=v;if(SMODE())await checkFree();if(!allowRoute(ROUTE.name)){ROUTE={name:'make'};render()}else if(ch||first)render()}catch(e){}}
 function shell(inner){
-  const nav=SMODE()?[]:[['home','🏠 처음'],['class','🏫 수사 본부'],['make','🖍️ 몽타주 만들기'],['oral','🕵️ 범인을 찾아라'],['teacher','🔒 교사']];
+  FREE_SHOWN=FREEOK();const nav=SMODE()?(FREEOK()?[['make','🖍️ 몽타주 만들기'],['class','🎮 자유 활동']]:[]):[['home','🏠 처음'],['class','🏫 수사 본부'],['make','🖍️ 몽타주 만들기'],['oral','🕵️ 범인을 찾아라'],['teacher','🔒 교사']];
   return `<header class="top"><div class="top-in"><button class="logo" ${SMODE()?'':'data-go="home"'}><span>🔍</span><b>색깔을 훔쳐간 범인</b></button>
    <nav class="nav">${nav.map(([k,t])=>`<button data-go="${k}" class="${ROUTE.name===k?'on':''}">${t}</button>`).join('')}</nav>
    <div class="right">${!STUDENT&&LOCKED&&!PIN?'<span class="pill" style="background:#FFE3E0;color:var(--stamp)">📝 평가 중</span><button class="btn sm" id="unlockT" title="선생님">🔒</button>':''}${DEMO?'<button class="btn sm red" id="demoOff" title="체험 끝내기">🎮 체험 중 ✕</button>':''}${!STUDENT&&!SMODE()?'<button class="btn sm" id="qrBtn">📱 학생 접속</button>':''}<button class="btn sm" id="biBtn" title="English">🌐 한/EN</button><button class="btn sm" id="spd">${SPEED==='slow'?'🐢 천천히':'🐇 보통'}</button></div></div></header><main>${inner}</main>`;
@@ -599,9 +612,9 @@ function mkSubmit(el){
   $('#bk').onclick=()=>sGo(5);
   $('#send').onclick=async e=>{const b=e.currentTarget;b.disabled=true;b.textContent='보내는 중…';
     try{await API.rpc('mt_submit',{p_class:CLS,p_no:SD.no,p_pin:SPIN,p_suspect:SD.sus,p_colors:SD.colors,p_statements:[0,1,2,3,4].map(i=>({n:i+1,word:normW(SD.words[i]),tries:SD.tries[i],wrong:(SD.wrongw||[])[i]||0,typo:(SD.typo||[])[i]||0,hint:(SD.hint||[])[i]?1:0})),p_written_auto:writtenAuto(),p_audio:CONFIG.SAVE_AUDIO?(SD.audio||null):null,p_audio_sec:CONFIG.SAVE_AUDIO?(SD.audioSec||0):0});
-      const img=susImg(SD.sus,SD.colors,.55);const nm=SD.no+'번';const mine={sus:SD.sus,colors:SD.colors,no:SD.no};CLIPS=[null,null,null,null,null];CLIPSEC=[0,0,0,0,0];DONE=[0,0,0,0,0];QI=0;SD=newDraft();saveSD();confetti(140);ding(true);hush();speak('Thank you, detective!');
-      el.innerHTML=`<div class="folder" style="max-width:640px;margin:30px auto 0;text-align:center"><span class="stamp" style="font-size:40px">접수 완료</span><img src="${img}" alt="" style="height:44vh;display:block;margin:18px auto"><h2 style="font-size:34px">${esc(nm)} 수사관님, 수사 파일이 도착했어요!</h2><p class="soft">다음 시간에 범인을 찾으러 가요 🕵️</p><button class="btn yel" id="mine">🔍 내가 칠한 범인 다시 보기</button> <button class="btn go" id="again">처음으로</button></div>`;
-      $('#again').onclick=()=>{SPIN=null;sGo(1)};$('#mine').onclick=()=>showMine(mine);
+      const img=susImg(SD.sus,SD.colors,.55);const nm=SD.no+'번';const mine={sus:SD.sus,colors:SD.colors,no:SD.no};CLIPS=[null,null,null,null,null];CLIPSEC=[0,0,0,0,0];DONE=[0,0,0,0,0];QI=0;SD=newDraft();saveSD();SS.set('mt_done_'+CLS,'1');checkFree();confetti(140);ding(true);hush();speak('Thank you, detective!');
+      el.innerHTML=`<div class="folder" style="max-width:640px;margin:30px auto 0;text-align:center"><span class="stamp" style="font-size:40px">접수 완료</span><img src="${img}" alt="" style="height:44vh;display:block;margin:18px auto"><h2 style="font-size:34px">${esc(nm)} 수사관님, 수사 파일이 도착했어요!</h2><p class="soft">다음 시간에 범인을 찾으러 가요 🕵️</p><button class="btn yel" id="mine">🔍 내가 칠한 범인 다시 보기</button> <button class="btn go" id="again">처음으로</button>${FREEOK()?' <button class="btn blue" id="toFree">🎮 자유 활동 하러 가기</button>':''}</div>`;
+      $('#again').onclick=()=>{SPIN=null;sGo(1)};$('#mine').onclick=()=>showMine(mine);const tf=$('#toFree');if(tf)tf.onclick=()=>go('class');
     }catch(err){console.error(err);if(/student pin/.test(err.message)){SPIN=null;toast('비밀번호를 다시 확인해요');return sGo(1)}toast('보내지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.');b.disabled=false;b.textContent='📮 수사 파일 제출하기'}};
 }
 
@@ -694,12 +707,20 @@ function bindPanel(){const r=OR.cur;
    교사 화면 · 채점표 · 수사 파일 내려받기
    ===================================================================== */
 let TV={all:false,history:false,rows:[]};
+async function initFreeBox(){const box=$('#freeBox');if(!box)return;
+  try{FREE=Object.assign({on:false,all:false,games:['fp','hs','mm']},JSON.parse(await API.rpc('mt_get_free',{})||'{}'))}catch(e){}
+  const ui=()=>{const m=!FREE.on?'off':FREE.all?'all':'done';$$('[data-fm]',box).forEach(b=>b.classList.toggle('on',b.dataset.fm===m));$$('[data-fg]',box).forEach(c=>c.checked=FREE.games.includes(c.dataset.fg));
+    const st=$('#freeSt');st.textContent=!FREE.on?'꺼짐':FREE.all?'모두 열림':'제출한 학생만';st.style.background=FREE.on?'#DFF3E4':''};
+  const save=async()=>{try{await API.rpc('mt_set_free',{p_pin:PIN,p_val:JSON.stringify(FREE)});ui();toast('저장했어요')}catch(e){toast('저장하지 못했어요')}};
+  $$('[data-fm]',box).forEach(b=>b.onclick=()=>{const m=b.dataset.fm;FREE.on=m!=='off';FREE.all=m==='all';save()});
+  $$('[data-fg]',box).forEach(c=>c.onchange=()=>{FREE.games=FREE_GAMES.map(([id])=>id).filter(id=>$(`[data-fg="${id}"]`,box).checked);save()});
+  ui()}
 async function renderTeacher(){
   if(!PIN)return pinGate(renderTeacher);
   const link=location.origin+location.pathname+'#student-'+encodeURIComponent(CLS);
   app.innerHTML=shell(`<div class="col" style="gap:20px">
-   <section class="card row" style="justify-content:space-between;gap:14px"><div class="row" style="gap:12px"><h2 style="font-size:28px">🏫 지금 수업하는 반</h2><input id="clsIn" value="${esc(CLS)}" aria-label="반" style="width:120px;font-size:26px;font-family:var(--f-d);text-align:center;border:2px solid var(--line);border-radius:12px;padding:4px 8px"><b style="font-family:var(--f-d);font-size:26px">반</b></div><span class="soft" style="font-size:16px">바꾸면 채점표 · 학생 링크 · QR · 반별 기록이 이 반으로 바뀌어요.</span></section>
-   ${TV.all?'':'<section class="card col" id="regBox"><div class="row" style="justify-content:space-between"><h2 style="font-size:28px">🧑‍🎓 등록 현황 · '+esc(CLS)+'반</h2><span id="regSum" style="font-family:var(--f-d);font-size:20px"></span><div class="row" style="gap:10px;font-size:16px"><span>✅ 등록</span><span>⚠️ 비밀번호 틀림</span><span>📮2 = 2번 제출</span><button class="btn sm" id="regRef">🔄</button></div></div><div class="regGrid" id="regGrid"><span class="soft">불러오는 중…</span></div><p class="soft" style="margin:0;font-size:15px">등록한 번호만 보여요. ⚠️는 누군가 그 번호로 비밀번호를 틀리게 넣은 거예요(같은 번호를 쓴 친구가 있을 수 있어요). 📮는 여러 번 제출한 번호예요. 번호를 두 번 누르면 비밀번호가 초기화돼요.</p></section>'}
+   <section class="card row" style="justify-content:space-between;gap:14px"><div class="row" style="gap:12px"><h2 style="font-size:28px">🏫 지금 수업하는 반</h2>${clsSelect('clsIn','font-size:26px;font-family:var(--f-d);border:2px solid var(--line);border-radius:12px;padding:6px 10px;background:#fff;cursor:pointer')}<b style="font-family:var(--f-d);font-size:26px">반</b></div><span class="soft" style="font-size:16px">바꾸면 채점표 · 학생 링크 · QR · 반별 기록이 이 반으로 바뀌어요.</span></section>
+   ${TV.all?'':'<section class="card col" id="regBox"><div class="row" style="justify-content:space-between"><h2 style="font-size:28px">🧑‍🎓 등록 현황 · '+esc(CLS)+'반</h2><span id="regSum" style="font-family:var(--f-d);font-size:20px"></span><div class="row" style="gap:10px;font-size:16px"><span>✅ 등록</span><span>⚠️ 비밀번호 틀림</span><span>📮2 = 2번 제출</span><button class="btn sm" id="regDel">🗑 학생 지우기</button><button class="btn sm" id="regRef">🔄</button></div></div><div class="regGrid" id="regGrid"><span class="soft">불러오는 중…</span></div><p class="soft" style="margin:0;font-size:15px">등록한 번호만 보여요. ⚠️는 누군가 그 번호로 비밀번호를 틀리게 넣은 거예요(같은 번호를 쓴 친구가 있을 수 있어요). 📮는 여러 번 제출한 번호예요. 번호를 두 번 누르면 비밀번호가 초기화돼요.</p></section>'}
    <section class="card col"><div class="row" style="justify-content:space-between"><h1 style="font-size:36px">📋 채점표 · ${TV.all?'모든 반':esc(CLS)+'반'}</h1>
      <div class="row"><label class="row" style="gap:6px;font-family:var(--f-d)"><input type="checkbox" id="all" ${TV.all?'checked':''}> 모든 반</label><label class="row" style="gap:6px;font-family:var(--f-d)"><input type="checkbox" id="hist" ${TV.history?'checked':''}> 다시 낸 것도 보기</label><button class="btn sm" id="ref">🔄 새로고침</button><button class="btn sm" id="csv">⬇ CSV</button><button class="btn sm go" id="prt">🖨 그림 카드 인쇄</button><button class="btn sm go" id="zip">⬇ 전체 내려받기 (수사 파일+녹음+CSV)</button></div></div>
     <div class="row" style="align-items:stretch;gap:10px;font-size:16px">
@@ -708,6 +729,9 @@ async function renderTeacher(){
      <div style="flex:1;min-width:260px;padding:14px;background:var(--kraft);border-radius:16px"><b style="font-family:var(--f-d);font-size:20px">구술 20점 (선생님)</b><br>${ORAL.map(([v,t])=>`${v} ${t}`).join(' · ')}</div></div>
     <div class="tw"><table><thead><tr><th>반</th><th>번호</th><th>몽타주</th><th>진술서</th><th>서답형/80</th><th>녹음</th><th>구술/20</th><th>라인업</th><th>합계</th><th>메모</th><th></th></tr></thead><tbody id="tb"><tr><td colspan="12" class="soft">불러오는 중…</td></tr></tbody></table></div>
     <p class="soft" style="margin:0;font-size:16px">점수를 바꾸면 바로 저장돼요. 학생이 비밀번호를 잊어버리면 🔑을 눌러 초기화하세요(다음에 들어올 때 새로 만들어요). 수사 파일은 60일 동안 보관하는 걸 권해요. 평가가 끝나면 ‘전체 내려받기’로 꼭 보관하세요.</p></section>
+   <section class="card col" id="freeBox" style="gap:10px"><div class="row" style="justify-content:space-between"><h2 style="font-size:28px">🎮 일찍 끝낸 학생 자유 활동</h2><span id="freeSt" class="pill" style="font-size:20px">확인 중…</span></div><p class="soft" style="margin:0;font-size:17px">켜 두면 학생 크롬북(학생 링크·평가 모드)에 <b>🎮 자유 활동</b> 메뉴가 생겨서, 고른 게임만 혼자 할 수 있어요. 학생 기기에는 20초 안에 적용돼요.</p>
+     <div class="row" style="gap:8px"><button class="sbtn" data-fm="off" style="padding:8px 18px">끄기</button><button class="sbtn" data-fm="done" style="padding:8px 18px">📮 제출한 학생만</button><button class="sbtn" data-fm="all" style="padding:8px 18px">👥 모두</button></div>
+     <div class="row" style="gap:14px;flex-wrap:wrap">${FREE_GAMES.map(([id,t])=>`<label class="row" style="gap:6px;font-family:var(--f-d);font-size:20px"><input type="checkbox" data-fg="${id}"> ${t}</label>`).join('')}</div></section>
    <section class="card col" id="lockBox" style="gap:10px"><div class="row" style="justify-content:space-between"><h2 style="font-size:28px">🔐 평가 모드</h2><span id="lockSt" class="pill" style="font-size:20px">확인 중…</span></div><p class="soft" style="margin:0;font-size:17px">켜면 이 앱을 여는 모든 기기에서 <b>몽타주 만들기</b>만 보여요(수사 본부 게임, 범인을 찾아라, 메뉴가 숨겨져요). 학생 기기는 새로고침하거나 화면을 옮길 때 바로 적용돼요. 이 기기처럼 선생님 비밀번호로 들어온 기기는 그대로 다 쓸 수 있어요. 전자칠판에서는 위쪽 🔒을 눌러 비밀번호를 넣으면 돼요.</p><div class="row"><button class="btn red" id="lockOn">📝 평가 모드 켜기</button><button class="btn go" id="lockOff">🎮 평가 모드 끄기 (게임 열기)</button></div></section>
    <section class="row" style="align-items:stretch">
     <div class="card col" style="flex:1;min-width:320px"><h2 style="font-size:28px">학생 크롬북 링크 (${esc(CLS)}반)</h2><p class="soft" style="margin:0">이 링크로 들어가면 몽타주 만들기 화면만 보여요.</p><div class="row"><input id="link" readonly value="${esc(link)}" style="flex:1;border:1px solid var(--line);border-radius:10px;padding:8px;font-family:var(--f-e)"><button class="btn sm" id="cp">복사</button></div></div>
@@ -722,7 +746,7 @@ async function renderTeacher(){
   const setLockUI=v=>{const s=$('#lockSt');if(s){s.textContent=v?'📝 켜짐 · 몽타주 만들기만 열려 있어요':'🎮 꺼짐 · 모든 기능이 열려 있어요';s.style.background=v?'#FFE3E0':'#E6F6EC'}};
   API.rpc('mt_get_lock',{}).then(v=>{LOCKED=!!v;setLockUI(LOCKED)}).catch(()=>{const s=$('#lockSt');if(s)s.textContent='확인 못 함'});
   const setLock=async on=>{try{await API.rpc('mt_set_lock',{p_pin:PIN,p_on:on});LOCKED=on;setLockUI(on);toast(on?'평가 모드를 켰어요':'평가 모드를 껐어요. 게임을 쓸 수 있어요')}catch(e){toast('바꾸지 못했어요')}};
-  $('#lockOn').onclick=()=>setLock(true);$('#lockOff').onclick=()=>setLock(false);$('#prt').onclick=printCards;
+  $('#lockOn').onclick=()=>setLock(true);$('#lockOff').onclick=()=>setLock(false);initFreeBox();$('#prt').onclick=printCards;
   try{await loadAll();TV.rows=await loadRows(TV.all?null:CLS)}catch(e){if(/pin/.test(e.message)){PIN=null;SS.set('mt_pin',null);return pinGate(renderTeacher)}$('#tb').innerHTML='<tr><td colspan="12">불러오지 못했어요.</td></tr>';return}
   fillTable();loadReg();
 }
@@ -736,9 +760,13 @@ async function loadReg(){const g=$('#regGrid');if(!g)return;let list=[];
   if(!reg.length){g.innerHTML='<span class="soft">아직 등록한 학생이 없어요.</span>';return}
   g.innerHTML=reg.map(s=>{const n=String(s.student_no);const w=s.wrong_count>0;
     return `<button class="rg ${w?'warn':'ok'}" data-rn="${n}" title="${n}번 · 등록 ${new Date(s.created_at).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})}${w?` · 비밀번호 틀림 ${s.wrong_count}번`:''}"><b>${n}</b><small>${w?'⚠️'+s.wrong_count:'✅'}${s.submits>1?' 📮'+s.submits:''}</small></button>`}).join('');
-  $$('[data-rn]',g).forEach(b=>b.onclick=async()=>{const n=b.dataset.rn;if(!b.dataset.sure){b.dataset.sure='1';b.querySelector('small').textContent='🔑초기화?';return}
+  g.classList.toggle('delmode',!!window.REGDEL);
+  $$('[data-rn]',g).forEach(b=>b.onclick=async()=>{const n=b.dataset.rn;
+    if(window.REGDEL){if(!confirm(`${CLS}반 ${n}번 학생을 지울까요?\n등록 정보와 제출한 수사 파일·점수가 모두 지워지고, 되돌릴 수 없어요.`))return;
+      try{const k=await API.rpc('mt_delete_student',{p_pin:PIN,p_class:CLS,p_no:n});toast(`${n}번을 지웠어요${k?` (수사 파일 ${k}개)`:''}`);window.REGDEL=false;renderTeacher()}catch(e){toast('지우지 못했어요')}return}
+    if(!b.dataset.sure){b.dataset.sure='1';b.querySelector('small').textContent='🔑초기화?';return}
     try{await API.rpc('mt_reset_student_pin',{p_pin:PIN,p_class:CLS,p_no:n});toast(`${n}번 비밀번호를 지웠어요`);loadReg()}catch(e){toast('초기화하지 못했어요')}});
-  const rr=$('#regRef');if(rr)rr.onclick=loadReg}
+  const rr=$('#regRef');if(rr)rr.onclick=loadReg;const rd=$('#regDel');if(rd){rd.classList.toggle('red',!!window.REGDEL);rd.textContent=window.REGDEL?'✕ 지우기 그만':'🗑 학생 지우기';rd.onclick=()=>{window.REGDEL=!window.REGDEL;if(window.REGDEL)toast('지울 학생 번호를 누르세요');loadReg()}}}
 function fillTable(){const tb=$('#tb');const rows=viewRows();const latest=new Set(latestOnly(TV.rows).map(r=>r.id));
   if(!rows.length){tb.innerHTML='<tr><td colspan="12" class="soft">아직 제출한 수사 파일이 없어요.</td></tr>';return}
   tb.innerHTML=rows.map(r=>`<tr data-id="${r.id}" style="${latest.has(r.id)?'':'opacity:.5'}"><td>${esc(r.class_code)}</td><td style="font-family:var(--f-d);font-size:22px">${esc(r.student_no)}번${latest.has(r.id)?'':' <small>(이전)</small>'}</td>
@@ -835,8 +863,16 @@ const HUB=[
  
 ];
 HUB[0].items.push({nw:1,id:'ff',ic:'👣',t:'발자국을 따라가라',d:'모두 활동지를 들고, 들리는 색깔 발자국을 따라 선을 그어 숨은 도둑을 찾아요.',tag:'듣기 · 활동지 · 반 전체'});
+function renderFree(){
+  const items=HUB.flatMap((g,gi)=>g.items.map(it=>[it,g,gi])).filter(([it])=>FREE.games.includes(it.id));
+  app.innerHTML=shell(`<div class="row" style="justify-content:space-between;margin:6px 0 16px"><div><h1 style="font-size:42px">🎮 자유 활동</h1><p class="soft" style="margin:4px 0 0;font-size:20px">몽타주를 다 낸 수사관을 위한 혼자 하는 훈련이에요. 소리는 이어폰으로 들어요.</p></div><span class="stamp" style="font-size:24px">BONUS</span></div>
+   <div class="hgrid hubgrid2">${items.map(([it,g,gi])=>`<button class="hcard hubc" data-g="${it.id}"><span class="hrow"><span class="htag hh${gi}">${g.h}</span><span class="hic">${it.ic}</span></span><b class="htitle">${it.t}</b><span class="hdesc">${it.d}</span><span class="hgo">→</span></button>`).join('')||'<p class="soft">열린 활동이 없어요.</p>'}</div>`);
+  $$('[data-g]').forEach(b=>b.onclick=()=>{G.id=b.dataset.g;renderClass()});
+}
 function renderClass(){
   gStop();
+  if(G.id&&SMODE()&&!FREE.games.includes(G.id))G.id=null;
+  if(!G.id&&SMODE())return renderFree();
   if(G.id)return ({ff:ffSetup,hs:hsSetup,px:pxSetup,fp:fpSetup,c4:c4Setup,wp:wpSetup,mm:mmSetup,mc:mcSetup,st:stSetup})[G.id]();
   app.innerHTML=shell(`<div class="row" style="justify-content:space-between;margin:6px 0 16px"><div><h1 style="font-size:42px">🏫 수사 본부</h1><p class="soft" style="margin:4px 0 0;font-size:20px">범인을 잡으려면 수사 훈련이 필요해요! 전자칠판으로 반 전체가 함께 해요.</p></div><span class="stamp" style="font-size:24px">TRAINING</span></div>
    <div class="hgrid hubgrid2">${HUB.map((g,gi)=>g.items.map(it=>`<button class="hcard hubc" data-g="${it.id}"><span class="hrow"><span class="htag hh${gi}">${g.h}</span>${it.nw?'<span class="newb">NEW</span>':''}<span class="hic">${it.ic}</span></span><b class="htitle">${it.t}</b><span class="hdesc">${it.d}</span><span class="hfoot">${it.tag}</span><span class="hgo">→</span></button>`).join('')).join('')}</div>`);
@@ -1541,7 +1577,7 @@ function qrOpen(){let ov=$('.qrov');if(!ov){ov=document.createElement('div');ov.
   const url=location.origin+location.pathname+'#student-'+encodeURIComponent(CLS),isFile=location.protocol==='file:';let q='';try{q=isFile?'':QR.svg(url,10,4)}catch(e){}
   ov.innerHTML=`<div class="wsbar"><b style="font-family:var(--f-d);font-weight:400;font-size:26px">📱 학생 접속 QR</b><div class="row">${isFile?'':'<button class="btn yel" id="qrPr">🖨 QR 인쇄</button>'}<button class="btn sm" id="qrX">닫기</button></div></div>
    <div class="qrwrap"><div class="qrbox card">${isFile?'<p style="font-size:22px;padding:30px;max-width:360px">QR 코드는 <b>넷리파이 등에 올린 주소</b>로 열었을 때 만들어져요.<br>지금은 파일로 열려 있어요.</p>':q}</div>
-    <div class="col" style="gap:14px;max-width:420px"><div class="row" style="gap:10px"><input id="qrCls" value="${esc(CLS)}" aria-label="반" style="width:120px;font-size:34px;font-family:var(--f-d);text-align:center;border:2px solid var(--line);border-radius:14px;padding:4px 8px"><b style="font-family:var(--f-d);font-size:34px">반</b></div>
+    <div class="col" style="gap:14px;max-width:420px"><div class="row" style="gap:10px">${clsSelect('qrCls','font-size:34px;font-family:var(--f-d);border:2px solid var(--line);border-radius:14px;padding:6px 12px;background:#fff;cursor:pointer')}<b style="font-family:var(--f-d);font-size:34px">반</b></div>
      <p class="soft" style="margin:0;font-size:18px">이 QR로 들어온 크롬북은 <b>${esc(CLS)}반</b> 몽타주 만들기 화면만 보여요.</p></div></div>`;
   $('#qrX',ov).onclick=()=>ov.remove();const pr=$('#qrPr',ov);if(pr)pr.onclick=()=>qrPrint(url,CLS);
   $('#qrCls',ov).onchange=e=>{const v=e.target.value.trim().slice(0,12);if(v&&v!==CLS){CLS=v;LS.set('mt_cls',v);SD=loadDraft();toast(v+'반으로 바꿨어요');render();qrOpen()}};applyBI()}
@@ -1550,8 +1586,9 @@ function qrPrint(url,cls){let q='';try{q=QR.svg(url,4,2)}catch(e){return toast('
   let pa=$('#printArea');if(!pa){pa=document.createElement('div');pa.id='printArea';document.body.appendChild(pa)}pa.className='qrp';pa.innerHTML=card;
   setTimeout(()=>{try{window.print()}catch(e){}},300)}
 document.addEventListener('click',e=>{if(e.target.closest('#qrBtn'))qrOpen()});
-Object.assign(EN_DICT,{"📱 학생 접속":"📱 Student link","📱 학생 접속 QR":"📱 Student QR","🏫 지금 수업하는 반":"🏫 Current class","바꾸면 채점표 · 학생 링크 · QR · 반별 기록이 이 반으로 바뀌어요.":"Changing this switches the score sheet, student link, QR and class records.","주소":"Address","🖨 QR 인쇄":"🖨 Print QR"});
+Object.assign(EN_DICT,{"📱 학생 접속":"📱 Student link","📱 학생 접속 QR":"📱 Student QR","🎮 자유 활동":"🎮 Free play","🗑 학생 지우기":"🗑 Delete student","✕ 지우기 그만":"✕ Stop deleting","지울 학생 번호를 누르세요":"Tap the number to delete","🎮 일찍 끝낸 학생 자유 활동":"🎮 Free play for early finishers","📮 제출한 학생만":"📮 Submitted only","👥 모두":"👥 Everyone","끄기":"Off","꺼짐":"Off","모두 열림":"Open to all","제출한 학생만":"Submitted only","🎮 자유 활동 하러 가기":"🎮 Go to free play","몽타주를 다 낸 수사관을 위한 혼자 하는 훈련이에요. 소리는 이어폰으로 들어요.":"Solo training for detectives who have handed in their sketch. Use earphones.","🏫 지금 수업하는 반":"🏫 Current class","바꾸면 채점표 · 학생 링크 · QR · 반별 기록이 이 반으로 바뀌어요.":"Changing this switches the score sheet, student link, QR and class records.","주소":"Address","🖨 QR 인쇄":"🖨 Print QR"});
 
+if(STUDENT)checkFree();
 applyBI();
 render();
 if(!STUDENT&&!PIN)checkLock(true);
