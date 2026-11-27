@@ -1052,10 +1052,14 @@ function ffGrid(n){const R=ffRng(n*7919+13);const g=[];
     g._cs=null;g.push(row)}
   return g}
 const ffEnd=p=>Math.floor(p[FF_R-1].c/2);
-function ffPath(g,used){let best=null;
-  for(let t=0;t<400;t++){let c=FF_S0+Math.floor(Math.random()*(FF_S1-FF_S0+1));const p=[{r:0,c}];
+// 같은 색 순서로 갈 수 있는 길이 딱 하나인지 세요 (1번 줄 어느 발자국에서 출발해도)
+function ffCount(g,seq){let n=0;const go=(r,c)=>{if(n>1||g[r][c]!==seq[r])return;if(r===FF_R-1){n++;return}for(const x of [c-1,c,c+1])if(x>=0&&x<FF_C)go(r+1,x)};for(let c=0;c<FF_C;c++)go(0,c);return n}
+function ffPath(g,used){let best=null,ok=null;
+  for(let t=0;t<2000;t++){let c=FF_S0+Math.floor(Math.random()*(FF_S1-FF_S0+1));const p=[{r:0,c}];
     for(let r=1;r<FF_R;r++){const o=[c-1,c,c+1].filter(x=>x>=0&&x<FF_C);c=pick(o);p.push({r,c})}
-    best=p;if(!used.includes(ffEnd(p)))break}
+    if(ffCount(g,p.map(s=>g[s.r][s.c]))!==1)continue;
+    if(!ok)ok=p;best=p;if(!used.includes(ffEnd(p)))break;best=null}
+  best=best||ok;if(!best){let c=FF_S0;best=[{r:0,c}];for(let r=1;r<FF_R;r++)best.push({r,c})}
   return best.map(s=>Object.assign(s,{color:g[s.r][s.c]}))}
 const FF_COLW=80,FF_LM=36,FF_W=FF_LM+FF_COLW*FF_C+6,FF_TOP=62,FF_ROWH=66,FF_SUSY=FF_TOP+FF_R*FF_ROWH+8,FF_SUSH=128,FF_H=FF_SUSY+FF_SUSH+28;
 const ffX=c=>FF_LM+FF_COLW*c+FF_COLW/2,ffY=r=>FF_TOP+FF_ROWH*r+FF_ROWH/2,ffSX=i=>FF_LM+FF_COLW*2*i+FF_COLW;
